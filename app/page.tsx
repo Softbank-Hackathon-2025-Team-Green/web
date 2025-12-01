@@ -22,12 +22,6 @@ export default function Home() {
             >
               🚀 Launch Platform
             </Link>
-            <Link
-              href="/editor"
-              className="flex-1 px-6 py-3 bg-gray-800 text-white rounded-lg hover:bg-gray-700 transition-colors text-center font-medium shadow-lg"
-            >
-              Code Editor
-            </Link>
           </div>
           
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-8 w-full max-w-2xl">

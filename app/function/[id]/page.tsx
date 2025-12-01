@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { FunctionMetadata, FunctionRunLog, VulnerabilityCheckResult } from '@/types/function';
+import { FunctionMetadata, FunctionRunLog } from '@/types/function';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 export default function FunctionDetailPage() {
@@ -14,8 +14,6 @@ export default function FunctionDetailPage() {
   const [runLogs, setRunLogs] = useState<FunctionRunLog[]>([]);
   const [isDeploying, setIsDeploying] = useState(false);
   const [isRunning, setIsRunning] = useState(false);
-  const [isCheckingVulnerability, setIsCheckingVulnerability] = useState(false);
-  const [vulnerabilityResult, setVulnerabilityResult] = useState<VulnerabilityCheckResult | null>(null);
 
   const loadFunctionData = async () => {
     try {
@@ -89,25 +87,6 @@ export default function FunctionDetailPage() {
     }
   };
 
-  const handleCheckVulnerability = async () => {
-    setIsCheckingVulnerability(true);
-    try {
-      const response = await fetch('/api/functions/vulnerability-check', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ functionId }),
-      });
-      
-      const result = await response.json();
-      setVulnerabilityResult(result);
-    } catch (error) {
-      console.error('Vulnerability check error:', error);
-      alert('Vulnerability check error');
-    } finally {
-      setIsCheckingVulnerability(false);
-    }
-  };
-
   if (!functionData) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 flex items-center justify-center">
@@ -171,13 +150,6 @@ export default function FunctionDetailPage() {
               {isRunning ? 'Running...' : '▶ Test Run'}
             </button>
             <button
-              onClick={handleCheckVulnerability}
-              disabled={isCheckingVulnerability}
-              className="px-6 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 disabled:opacity-50"
-            >
-              {isCheckingVulnerability ? 'Checking...' : '🔍 Check Vulnerability'}
-            </button>
-            <button
               onClick={() => router.push(`/function/${functionId}/edit`)}
               className="px-6 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700"
             >
@@ -185,36 +157,6 @@ export default function FunctionDetailPage() {
             </button>
           </div>
         </div>
-
-        {/* Vulnerability Results */}
-        {vulnerabilityResult && (
-          <div className={`rounded-lg shadow-xl p-6 mb-6 ${vulnerabilityResult.safe ? 'bg-green-50 border-2 border-green-500' : 'bg-red-50 border-2 border-red-500'}`}>
-            <h2 className="text-xl font-bold mb-4">
-              {vulnerabilityResult.safe ? '✓ No Vulnerabilities Found' : '⚠ Vulnerabilities Detected'}
-            </h2>
-            {!vulnerabilityResult.safe && (
-              <div className="space-y-2">
-                {vulnerabilityResult.issues.map((issue, index: number) => (
-                  <div key={index} className="bg-white p-3 rounded-md">
-                    <div className="flex items-center gap-2">
-                      <span className={`px-2 py-1 rounded text-xs font-bold ${
-                        issue.severity === 'critical' ? 'bg-red-600 text-white' :
-                        issue.severity === 'high' ? 'bg-orange-600 text-white' :
-                        issue.severity === 'medium' ? 'bg-yellow-600 text-white' :
-                        'bg-blue-600 text-white'
-                      }`}>
-                        {issue.severity.toUpperCase()}
-                      </span>
-                      <span className="font-semibold">{issue.type}</span>
-                    </div>
-                    <p className="mt-1 text-gray-700">{issue.description}</p>
-                    {issue.line && <p className="text-sm text-gray-500">Line: {issue.line}</p>}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
 
         {/* Observability Dashboard */}
         {latestRun && (
