@@ -115,7 +115,7 @@ export default function EditFunctionPage() {
       });
 
       if (response.ok) {
-        router.push('/home');
+        router.push('/function/' + functionId);
       } else {
         alert('Failed to update function');
       }
@@ -269,7 +269,7 @@ export default function EditFunctionPage() {
             {/* Actions */}
             <div className="flex justify-end gap-4">
               <button
-                onClick={() => router.push('/home')}
+                onClick={() => router.push('/function/' + functionId)}
                 className="px-6 py-2 text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300"
               >
                 Cancel

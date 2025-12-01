@@ -157,7 +157,6 @@ export default function CodeEditor({ projectPath, userId, onSave }: CodeEditorPr
         setCurrentFile(filePath);
         setCurrentContent(content);
         setLanguage(getLanguageFromPath(filePath));
-        showMessage('success', `Opened ${filePath}`);
       }
     } catch (error) {
       console.error('Failed to open file:', error);
@@ -249,7 +248,6 @@ export default function CodeEditor({ projectPath, userId, onSave }: CodeEditorPr
       });
 
       if (response.ok) {
-        showMessage('success', `${isFolder ? 'Folder' : 'File'} created`);
         loadDirectoryTree();
       } else {
         showMessage('error', 'Failed to create file');
