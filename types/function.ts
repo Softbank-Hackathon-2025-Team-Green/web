@@ -9,7 +9,7 @@ export interface EnvironmentVariable {
 }
 
 export interface FunctionMetadata {
-  id: string;
+  functionId: string;
   name: string;
   description: string;
   runtime: RuntimeImage;

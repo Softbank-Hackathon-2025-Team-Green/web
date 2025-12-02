@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const functionData: FunctionMetadata = body;
 
-    if (!functionData.id || !functionData.name || !functionData.runtime || !functionData.httpRoute) {
+    if (!functionData.functionId || !functionData.name || !functionData.runtime || !functionData.httpRoute) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
@@ -30,9 +30,9 @@ export async function POST(request: NextRequest) {
     });
 
     await docClient.send(command);
-    console.log('Function created in DynamoDB:', functionData.id);
+    console.log('Function created in DynamoDB:', functionData.functionId);
 
-    return NextResponse.json({ id: functionData.id, success: true });
+    return NextResponse.json({ functionId: functionData.functionId, success: true });
   } catch (error) {
     console.error('Error creating function:', error);
     return NextResponse.json(
