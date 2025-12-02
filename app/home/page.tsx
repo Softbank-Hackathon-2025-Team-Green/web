@@ -154,7 +154,7 @@ function HomePageContent() {
       
       // Create function metadata in DynamoDB
       const functionData = {
-        id: functionId,
+        functionId,
         name,
         description: '',
         runtime: 'node-20' as const,
