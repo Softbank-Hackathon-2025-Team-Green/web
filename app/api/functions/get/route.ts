@@ -12,9 +12,9 @@ export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
     const userId = searchParams.get('userId');
-    const id = searchParams.get('id');
-
-    if (!id) {
+    const functionId = searchParams.get('functionId');
+    
+    if (!functionId) {
       return NextResponse.json({ error: 'Function ID is required' }, { status: 400 });
     }
 
@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
     // Fetch from DynamoDB
     const command = new GetCommand({
       TableName: tableName,
-      Key: { userId, id },
+      Key: { userId, functionId },
     });
 
     const response = await docClient.send(command);
