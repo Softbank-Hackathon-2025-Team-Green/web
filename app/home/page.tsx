@@ -225,7 +225,7 @@ function HomePageContent() {
         } else {
           // Otherwise, create nodes from function metadata (backward compatibility)
           const functionNodes = functionsData.map((func) => ({
-            id: func.id,
+            id: func.functionId,
             type: 'functionNode',
             position: func.position || { x: 100, y: 100 },
             data: {
@@ -318,8 +318,8 @@ function HomePageContent() {
                 <div className="space-y-2">
                   {functions.map((func) => (
                     <button
-                      key={func.id}
-                      onClick={() => router.push(`/function/${func.id}`)}
+                      key={func.functionId}
+                      onClick={() => router.push(`/function/${func.functionId}`)}
                       className="w-full text-left p-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors"
                     >
                       <div className="font-medium text-sm text-gray-900">{func.name}</div>

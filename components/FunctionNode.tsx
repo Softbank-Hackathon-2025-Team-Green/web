@@ -36,7 +36,7 @@ export default function FunctionNode({ data }: FunctionNodeProps) {
   const colorClass = statusColors[status] || statusColors.unavailable;
 
   const handleClick = () => {
-    router.push(`/function/${functionData.id}`);
+    router.push(`/function/${functionData.functionId}`);
   };
 
   return (
