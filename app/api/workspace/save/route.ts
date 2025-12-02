@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'userId is required' }, { status: 400 });
     }
 
-    const tableName = process.env.DYNAMODB_WORKSPACE_TABLE || 'sbht-user-progress';
+    const tableName = process.env.NEXT_PUBLIC_DYNAMODB_WORKSPACE_TABLE || 'sbht-user-progress';
 
     // Save workspace state to DynamoDB
     const command = new PutCommand({

@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'userId is required' }, { status: 400 });
     }
 
-    const tableName = process.env.DYNAMODB_WORKSPACE_TABLE || 'sbht-user-progress';
+    const tableName = process.env.NEXT_PUBLIC_DYNAMODB_WORKSPACE_TABLE || 'sbht-user-progress';
 
     // Fetch workspace state from DynamoDB
     const command = new GetCommand({
