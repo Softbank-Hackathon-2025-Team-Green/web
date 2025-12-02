@@ -153,7 +153,7 @@ function HomePageContent() {
       const userId = 'test-user-123';
       
       // Create function metadata in DynamoDB
-      const functionData = {
+      const functionData: FunctionMetadata = {
         functionId,
         name,
         description: '',
@@ -163,7 +163,6 @@ function HomePageContent() {
         sourceFiles: [functionId],
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
-        lastRunAt: null,
         status: 'uninitialized' as const,
         currentRevision: '0',
         userId,
@@ -192,8 +191,26 @@ function HomePageContent() {
         }),
       });
 
-      // Redirect to function edit page
-      router.push(`/function/${functionId}/edit`);
+      // Add the function node to the canvas immediately
+      const newNode: Node = {
+        id: functionId,
+        type: 'functionNode',
+        position: clickPosition,
+        data: {
+          label: name,
+          status: 'uninitialized',
+          functionData: functionData,
+        },
+      };
+      
+      setNodes((nds) => [...nds, newNode]);
+      setFunctions((fns) => [...fns, functionData]);
+      
+      // Reset draw mode
+      setDrawMode(null);
+      
+      // The auto-save will trigger and save the workspace with the new node
+      console.log('Function node created on canvas:', functionId);
     } catch (error) {
       console.error('Failed to create function:', error);
       alert('Failed to create function');
@@ -213,9 +230,30 @@ function HomePageContent() {
         const functionsData: FunctionMetadata[] = await functionsResponse.json();
         setFunctions(functionsData);
 
-        // If workspace has saved state, use it
+        // Create a map of functionId to function metadata for quick lookup
+        const functionsMap = new Map<string, FunctionMetadata>(
+          functionsData.map(func => [func.functionId, func])
+        );
+
+        // If workspace has saved state, use it but enrich with latest function data
         if (workspaceData.nodes && workspaceData.nodes.length > 0) {
-          setNodes(workspaceData.nodes);
+          // Enrich function nodes with latest metadata
+          const enrichedNodes = workspaceData.nodes.map((node: Node) => {
+            if (node.type === 'functionNode' && functionsMap.has(node.id)) {
+              const funcData = functionsMap.get(node.id)!;
+              return {
+                ...node,
+                data: {
+                  label: funcData.name,
+                  status: funcData.status,
+                  functionData: funcData,
+                },
+              };
+            }
+            return node;
+          });
+          
+          setNodes(enrichedNodes);
           setEdges(workspaceData.edges || []);
           if (workspaceData.viewport) {
             setViewport(workspaceData.viewport, { duration: 0 });
