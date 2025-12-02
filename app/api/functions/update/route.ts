@@ -11,9 +11,9 @@ const docClient = DynamoDBDocumentClient.from(client);
 export async function PUT(request: NextRequest) {
   try {
     const body = await request.json();
-    const { id, userId, name, description, runtime, httpRoute, environmentVariables, updatedAt } = body;
+    const { functionId, userId, name, description, runtime, httpRoute, environmentVariables, updatedAt } = body;
 
-    if (!id || !userId) {
+    if (!functionId || !userId) {
       return NextResponse.json({ error: 'Function ID and User ID are required' }, { status: 400 });
     }
 
@@ -25,7 +25,7 @@ export async function PUT(request: NextRequest) {
     // Update in DynamoDB
     const command = new UpdateCommand({
       TableName: tableName,
-      Key: { userId, id },
+      Key: { userId, functionId },
       UpdateExpression: 'SET #name = :name, description = :description, runtime = :runtime, httpRoute = :httpRoute, environmentVariables = :environmentVariables, updatedAt = :updatedAt, #status = :status',
       ExpressionAttributeNames: {
         '#name': 'name',
@@ -44,7 +44,7 @@ export async function PUT(request: NextRequest) {
     });
 
     const response = await docClient.send(command);
-    console.log('Function updated in DynamoDB:', id);
+    console.log('Function updated in DynamoDB:', functionId);
 
     return NextResponse.json({ success: true, message: 'Function updated', data: response.Attributes });
   } catch (error) {

@@ -36,7 +36,7 @@ export default function EditFunctionPage() {
 
   const loadFunctionData = async () => {
     try {
-      const response = await fetch(`/api/functions/get?userId=${userId}&id=${functionId}`);
+      const response = await fetch(`/api/functions/get?userId=${userId}&functionId=${functionId}`);
       if (!response.ok) {
         throw new Error('Failed to load function');
       }
@@ -98,7 +98,7 @@ export default function EditFunctionPage() {
 
       // Then update function metadata
       const updateData = {
-        id: functionId,
+        functionId,
         userId,
         name,
         description,
