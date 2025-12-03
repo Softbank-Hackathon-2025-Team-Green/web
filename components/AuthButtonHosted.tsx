@@ -20,10 +20,8 @@ export default function AuthButtonHosted() {
 
   async function handleSignOut() {
     try {
-      // Sign out locally without going through Cognito's logout endpoint
-      // This prevents the logout_uri parameter issue
-      await signOut({ global: false });
-      clearUser(); // Clear user state immediately
+      await signOut();
+      clearUser(); // Clear user state immediately without calling getCurrentUser
     } catch (error) {
       console.error('Sign out error:', error);
     }
