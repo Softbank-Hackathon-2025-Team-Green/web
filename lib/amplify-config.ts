@@ -1,3 +1,5 @@
+import { Amplify } from 'aws-amplify';
+
 // Global assumed user ID for testing without authentication
 export const ASSUMED_USER_ID = process.env.NEXT_PUBLIC_ASSUMED_USER_ID || 'test-user-123';
 
@@ -9,8 +11,17 @@ export const AWS_CONFIG = {
   apiEndpoint: process.env.NEXT_PUBLIC_API_ENDPOINT || '',
 };
 
+// Amplify Auth Configuration
+export const amplifyConfig = {
+  Auth: {
+    Cognito: {
+      userPoolId: process.env.NEXT_PUBLIC_COGNITO_USER_POOL_ID || '',
+      userPoolClientId: process.env.NEXT_PUBLIC_COGNITO_USER_POOL_CLIENT_ID || '',
+      region: process.env.NEXT_PUBLIC_AWS_REGION || 'ap-northeast-2',
+    }
+  }
+};
+
 export function configureAmplify() {
-  // Configuration is now handled server-side via API routes
-  // This function is kept for compatibility but does nothing
-  console.log('AWS services configured via API routes');
+  Amplify.configure(amplifyConfig, { ssr: true });
 }
