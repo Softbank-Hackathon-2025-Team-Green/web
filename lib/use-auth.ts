@@ -1,8 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { getCurrentUser, fetchUserAttributes } from 'aws-amplify/auth';
+import { getCurrentUser, fetchAuthSession } from 'aws-amplify/auth';
 import type { AuthUser } from 'aws-amplify/auth';
+import { Amplify } from 'aws-amplify';
+import { amplifyConfig } from '@/lib/amplify-config';
 
 interface UserProfile {
   userId: string;
@@ -15,6 +17,7 @@ interface UseAuthReturn {
   isAuthenticated: boolean;
   isLoading: boolean;
   refreshUser: () => Promise<void>;
+  clearUser: () => void;
 }
 
 /**
@@ -40,12 +43,21 @@ export function useAuth(): UseAuthReturn {
   async function checkUser() {
     try {
       const currentUser: AuthUser = await getCurrentUser();
-      const attributes = await fetchUserAttributes();
+      
+      // Get email from ID token claims (available with oauth/hosted UI)
+      let email: string | undefined;
+      try {
+        const session = await fetchAuthSession();
+        const idToken = session.tokens?.idToken;
+        email = idToken?.payload?.email as string | undefined;
+      } catch {
+        // If session fetch fails, continue without email
+      }
       
       setUser({
         userId: currentUser.userId,
         username: currentUser.username,
-        email: attributes.email,
+        email,
       });
     } catch {
       setUser(null);
@@ -55,7 +67,15 @@ export function useAuth(): UseAuthReturn {
   }
 
   useEffect(() => {
-    checkUser();
+    // Configure Amplify first (must happen before any auth calls)
+    Amplify.configure(amplifyConfig, { ssr: true });
+    
+    // Small delay to ensure OAuth callback is processed
+    const timer = setTimeout(() => {
+      checkUser();
+    }, 100);
+    
+    return () => clearTimeout(timer);
   }, []);
 
   return {
@@ -63,5 +83,6 @@ export function useAuth(): UseAuthReturn {
     isAuthenticated: !!user,
     isLoading,
     refreshUser: checkUser,
+    clearUser: () => setUser(null),
   };
 }
