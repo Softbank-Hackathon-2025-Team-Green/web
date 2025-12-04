@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { startCodeBuild, getBuildStatus, StartBuildParams, BuildInfo } from '@/lib/codebuild-utils';
+import { getAuthenticatedUserId } from '@/lib/auth-server';
 
 export async function POST(request: NextRequest) {
   try {
@@ -10,7 +11,7 @@ export async function POST(request: NextRequest) {
       // environmentVariables, 
       // sourceVersion,
       // buildspecOverride,
-      // waitForCompletion = false 
+      customRoutes = '/',
       waitForCompletion = false
     } = body;
 
@@ -18,11 +19,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Function ID is required' }, { status: 400 });
     }
 
-    console.log('Deploying function:', functionId, 'via CodeBuild project');
+    // Get authenticated user ID
+    const userId = await getAuthenticatedUserId();
+    if (!userId) {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+    }
+
+    console.log('Deploying function:', functionId, 'for user:', userId, 'via CodeBuild project');
 
     // Prepare environment variables for the build
     const envVars: Record<string, string> = {
       FUNCTION_ID: functionId,
+      USER_ID: userId,
+      CUSTOM_ROUTES: customRoutes,
       // ...environmentVariables,
     };
 

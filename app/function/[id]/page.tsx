@@ -43,11 +43,17 @@ export default function FunctionDetailPage() {
 
   const handleDeploy = async () => {
     setIsDeploying(true);
+
+
+
     try {
       const response = await fetch('/api/functions/deploy', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ functionId }),
+        body: JSON.stringify({ 
+          functionId,
+          customRoutes: functionData?.httpRoute
+         }),
       });
       
       if (response.ok) {
