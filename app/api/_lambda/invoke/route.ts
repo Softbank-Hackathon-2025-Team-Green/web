@@ -1,69 +1,24 @@
-import { LambdaClient, InvokeCommand } from '@aws-sdk/client-lambda';
 import { NextRequest, NextResponse } from 'next/server';
-
-const lambdaClient = new LambdaClient({
-  region: process.env.AWS_REGION || 'ap-northeast-2',
-});
+import { invokeLambda } from '@/lib/actions/lambda';
 
 export async function POST(request: NextRequest) {
   try {
     const { functionName, payload, useIAM } = await request.json();
 
-    // Option 1: Direct Lambda invocation with IAM credentials (recommended for secured functions)
-    if (useIAM) {
-      if (!functionName) {
-        return NextResponse.json(
-          { error: 'Function name not provided' },
-          { status: 400 }
-        );
-      }
+    const result = await invokeLambda({ functionName, payload, useIAM: useIAM || false });
 
-      const command = new InvokeCommand({
-        FunctionName: functionName,
-        Payload: JSON.stringify(payload || {}),
-        InvocationType: 'RequestResponse', // Synchronous invocation
-      });
-
-      const response = await lambdaClient.send(command);
-      
-      // Decode the response payload
-      const responsePayload = response.Payload 
-        ? JSON.parse(new TextDecoder().decode(response.Payload))
-        : null;
-
-      return NextResponse.json({
-        statusCode: response.StatusCode || 200,
-        executedVersion: response.ExecutedVersion,
-        body: responsePayload,
-        functionError: response.FunctionError,
-      });
-    }
-
-    // Option 2: API Gateway endpoint (for publicly accessible or API Gateway secured functions)
-    const apiEndpoint = process.env.NEXT_PUBLIC_API_ENDPOINT;
-
-    if (!apiEndpoint) {
+    if (!result.success) {
       return NextResponse.json(
-        { error: 'API endpoint not configured' },
-        { status: 500 }
+        { error: result.error },
+        { status: result.error?.includes('not configured') ? 500 : 400 }
       );
     }
 
-    const response = await fetch(`${apiEndpoint}/${functionName}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(payload || {}),
-    });
-
-    const data = await response.json();
-
-    console.log(data);
-
     return NextResponse.json({
-      statusCode: response.status,
-      body: data,
+      statusCode: result.statusCode,
+      executedVersion: result.executedVersion,
+      body: result.body,
+      functionError: result.functionError,
     });
   } catch (error) {
     console.error('Error invoking Lambda:', error);

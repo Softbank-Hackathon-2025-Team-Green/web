@@ -1,183 +1,112 @@
-export interface DynamoDBTestResult {
-  success: boolean;
-  message: string;
-  data?: unknown;
-  error?: string;
+/**
+ * DynamoDB AWS SDK wrapper functions (Library Layer)
+ * Lowest level - Direct AWS SDK calls
+ */
+
+import { 
+  ScanCommand, 
+  GetCommand, 
+  PutCommand, 
+  DeleteCommand, 
+  QueryCommand 
+} from '@aws-sdk/lib-dynamodb';
+import { getDynamoDBDocClient, getDynamoDBTableName } from './aws-clients';
+
+/**
+ * Scan items from DynamoDB table
+ */
+export async function scanItems(limit: number = 10): Promise<{
+  items: unknown[];
+  count?: number;
+  scannedCount?: number;
+}> {
+  const docClient = getDynamoDBDocClient();
+  const tableName = getDynamoDBTableName();
+
+  const command = new ScanCommand({
+    TableName: tableName,
+    Limit: limit,
+  });
+
+  const response = await docClient.send(command);
+
+  return {
+    items: response.Items || [],
+    count: response.Count,
+    scannedCount: response.ScannedCount,
+  };
 }
 
 /**
- * Create/Put an item in DynamoDB
+ * Get a single item from DynamoDB table
  */
-export async function putDynamoDBItem(item: Record<string, unknown>): Promise<DynamoDBTestResult> {
-  try {
-    const response = await fetch('/api/dynamodb/put', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ item }),
-    });
+export async function getItem(key: Record<string, unknown>): Promise<unknown | null> {
+  const docClient = getDynamoDBDocClient();
+  const tableName = getDynamoDBTableName();
 
-    const result = await response.json();
+  const command = new GetCommand({
+    TableName: tableName,
+    Key: key,
+  });
 
-    if (!response.ok) {
-      return {
-        success: false,
-        message: 'Failed to put item',
-        error: result.error,
-      };
-    }
-
-    return {
-      success: true,
-      message: 'Item created successfully',
-      data: result,
-    };
-  } catch (error) {
-    return {
-      success: false,
-      message: 'Failed to put item',
-      error: error instanceof Error ? error.message : String(error),
-    };
-  }
+  const response = await docClient.send(command);
+  return response.Item || null;
 }
 
 /**
- * Get an item from DynamoDB
+ * Put an item into DynamoDB table
  */
-export async function getDynamoDBItem(key: Record<string, unknown>): Promise<DynamoDBTestResult> {
-  try {
-    const response = await fetch('/api/dynamodb/get', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ key }),
-    });
+export async function putItem(item: Record<string, unknown>): Promise<{ success: boolean }> {
+  const docClient = getDynamoDBDocClient();
+  const tableName = getDynamoDBTableName();
 
-    const result = await response.json();
+  const command = new PutCommand({
+    TableName: tableName,
+    Item: item,
+  });
 
-    if (!response.ok) {
-      return {
-        success: false,
-        message: 'Failed to get item',
-        error: result.error,
-      };
-    }
-
-    return {
-      success: true,
-      message: 'Item retrieved successfully',
-      data: result.item,
-    };
-  } catch (error) {
-    return {
-      success: false,
-      message: 'Failed to get item',
-      error: error instanceof Error ? error.message : String(error),
-    };
-  }
+  await docClient.send(command);
+  return { success: true };
 }
 
 /**
- * Query items from DynamoDB
+ * Delete an item from DynamoDB table
  */
-export async function queryDynamoDBItems(params: {
-  keyConditionExpression: string;
-  expressionAttributeValues: Record<string, unknown>;
-}): Promise<DynamoDBTestResult> {
-  try {
-    const response = await fetch('/api/dynamodb/query', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(params),
-    });
+export async function deleteItem(key: Record<string, unknown>): Promise<{ success: boolean }> {
+  const docClient = getDynamoDBDocClient();
+  const tableName = getDynamoDBTableName();
 
-    const result = await response.json();
+  const command = new DeleteCommand({
+    TableName: tableName,
+    Key: key,
+  });
 
-    if (!response.ok) {
-      return {
-        success: false,
-        message: 'Failed to query items',
-        error: result.error,
-      };
-    }
-
-    return {
-      success: true,
-      message: 'Items queried successfully',
-      data: result.items,
-    };
-  } catch (error) {
-    return {
-      success: false,
-      message: 'Failed to query items',
-      error: error instanceof Error ? error.message : String(error),
-    };
-  }
+  await docClient.send(command);
+  return { success: true };
 }
 
 /**
- * Scan items from DynamoDB
+ * Query items from DynamoDB table
  */
-export async function scanDynamoDBItems(limit?: number): Promise<DynamoDBTestResult> {
-  try {
-    const response = await fetch(`/api/dynamodb/scan?limit=${limit || 10}`, {
-      method: 'GET',
-      headers: { 'Content-Type': 'application/json' },
-    });
+export async function queryItems(
+  keyConditionExpression: string,
+  expressionAttributeValues: Record<string, unknown>,
+  expressionAttributeNames?: Record<string, string>
+): Promise<{ items: unknown[]; count?: number }> {
+  const docClient = getDynamoDBDocClient();
+  const tableName = getDynamoDBTableName();
 
-    const result = await response.json();
+  const command = new QueryCommand({
+    TableName: tableName,
+    KeyConditionExpression: keyConditionExpression,
+    ExpressionAttributeValues: expressionAttributeValues,
+    ExpressionAttributeNames: expressionAttributeNames,
+  });
 
-    if (!response.ok) {
-      return {
-        success: false,
-        message: 'Failed to scan items',
-        error: result.error,
-      };
-    }
+  const response = await docClient.send(command);
 
-    return {
-      success: true,
-      message: 'Items scanned successfully',
-      data: result.items,
-    };
-  } catch (error) {
-    return {
-      success: false,
-      message: 'Failed to scan items',
-      error: error instanceof Error ? error.message : String(error),
-    };
-  }
-}
-
-/**
- * Delete an item from DynamoDB
- */
-export async function deleteDynamoDBItem(key: Record<string, unknown>): Promise<DynamoDBTestResult> {
-  try {
-    const response = await fetch('/api/dynamodb/delete', {
-      method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ key }),
-    });
-
-    const result = await response.json();
-
-    if (!response.ok) {
-      return {
-        success: false,
-        message: 'Failed to delete item',
-        error: result.error,
-      };
-    }
-
-    return {
-      success: true,
-      message: 'Item deleted successfully',
-      data: result,
-    };
-  } catch (error) {
-    return {
-      success: false,
-      message: 'Failed to delete item',
-      error: error instanceof Error ? error.message : String(error),
-    };
-  }
+  return {
+    items: response.Items || [],
+    count: response.Count,
+  };
 }

@@ -1,28 +1,16 @@
 'use server';
 
-import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
-import { DynamoDBDocumentClient, GetCommand, PutCommand, ScanCommand, UpdateCommand, DeleteCommand } from '@aws-sdk/lib-dynamodb';
+import { GetCommand, PutCommand, ScanCommand, UpdateCommand, DeleteCommand } from '@aws-sdk/lib-dynamodb';
 import { FunctionMetadata } from '@/types/function';
 import { requireAuth } from '@/lib/auth-server';
+import { getDynamoDBDocClient, getDynamoDBTableName } from '../aws-clients';
 
-const dynamoClient = new DynamoDBClient({
-  region: process.env.AWS_REGION || 'ap-northeast-2',
-});
-
-const docClient = DynamoDBDocumentClient.from(dynamoClient);
-
-const getTableName = () => {
-  const tableName = process.env.NEXT_PUBLIC_DYNAMODB_TABLE;
-  if (!tableName) {
-    throw new Error('DynamoDB table not configured');
-  }
-  return tableName;
-};
+const docClient = getDynamoDBDocClient();
 
 export async function listFunctions(userId?: string): Promise<FunctionMetadata[]> {
   try {
     const effectiveUserId = userId || await requireAuth();
-    const tableName = getTableName();
+    const tableName = getDynamoDBTableName();
 
     const command = new ScanCommand({
       TableName: tableName,
@@ -43,7 +31,7 @@ export async function listFunctions(userId?: string): Promise<FunctionMetadata[]
 export async function getFunction(functionId: string, userId?: string): Promise<FunctionMetadata | null> {
   try {
     const effectiveUserId = userId || await requireAuth();
-    const tableName = getTableName();
+    const tableName = getDynamoDBTableName();
 
     const command = new GetCommand({
       TableName: tableName,
@@ -64,7 +52,7 @@ export async function createFunction(functionData: FunctionMetadata): Promise<{ 
       throw new Error('Missing required fields');
     }
 
-    const tableName = getTableName();
+    const tableName = getDynamoDBTableName();
 
     const command = new PutCommand({
       TableName: tableName,
@@ -95,7 +83,7 @@ export async function updateFunction(
 ): Promise<{ success: boolean; data: FunctionMetadata }> {
   try {
     const effectiveUserId = userId || await requireAuth();
-    const tableName = getTableName();
+    const tableName = getDynamoDBTableName();
 
     const updateExpressions: string[] = [];
     const expressionAttributeNames: Record<string, string> = {};
@@ -159,7 +147,7 @@ export async function updateFunction(
 export async function deleteFunction(functionId: string, userId?: string): Promise<{ success: boolean }> {
   try {
     const effectiveUserId = userId || await requireAuth();
-    const tableName = getTableName();
+    const tableName = getDynamoDBTableName();
 
     const command = new DeleteCommand({
       TableName: tableName,

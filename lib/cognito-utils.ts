@@ -4,7 +4,6 @@
  */
 
 import {
-  CognitoIdentityProviderClient,
   InitiateAuthCommand,
   SignUpCommand,
   ConfirmSignUpCommand,
@@ -12,6 +11,7 @@ import {
   GlobalSignOutCommand,
   AttributeType,
 } from '@aws-sdk/client-cognito-identity-provider';
+import { getCognitoClient } from './aws-clients';
 
 // Cognito Configuration
 export const COGNITO_CONFIG = {
@@ -21,9 +21,7 @@ export const COGNITO_CONFIG = {
 };
 
 // Create Cognito client
-const cognitoClient = new CognitoIdentityProviderClient({
-  region: COGNITO_CONFIG.region,
-});
+const cognitoClient = getCognitoClient();
 
 export interface AuthTokens {
   AccessToken: string;

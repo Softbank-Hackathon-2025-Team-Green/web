@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Editor from '@monaco-editor/react';
-import { getLanguageFromPath, FileSystemItem } from '@/lib/filesystem-utils';
+import { getLanguageFromPath } from '@/lib/editor-utils';
+import { FileSystemItem } from '@/lib/actions/vscode';
 import InputDialog from './InputDialog';
 import CodeReviewDialog from './CodeReviewDialog';
 

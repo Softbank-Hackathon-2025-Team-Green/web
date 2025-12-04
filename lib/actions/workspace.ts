@@ -1,15 +1,11 @@
 'use server';
 
-import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
-import { DynamoDBDocumentClient, GetCommand, PutCommand } from '@aws-sdk/lib-dynamodb';
+import { GetCommand, PutCommand } from '@aws-sdk/lib-dynamodb';
 import { type Node, type Edge } from '@xyflow/react';
 import { requireAuth } from '@/lib/auth-server';
+import { getDynamoDBDocClient } from '../aws-clients';
 
-const dynamoClient = new DynamoDBClient({
-  region: process.env.AWS_REGION || 'ap-northeast-2',
-});
-
-const docClient = DynamoDBDocumentClient.from(dynamoClient);
+const docClient = getDynamoDBDocClient();
 
 const getWorkspaceTableName = () => {
   return process.env.NEXT_PUBLIC_DYNAMODB_WORKSPACE_TABLE || 'sbht-user-progress';

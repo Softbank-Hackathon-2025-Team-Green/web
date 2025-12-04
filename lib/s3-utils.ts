@@ -1,158 +1,137 @@
-export interface S3TestResult {
-  success: boolean;
-  message: string;
-  data?: unknown;
-  error?: string;
+/**
+ * S3 AWS SDK wrapper functions (Library Layer)
+ * Lowest level - Direct AWS SDK calls
+ */
+
+import {
+  PutObjectCommand,
+  GetObjectCommand,
+  DeleteObjectCommand,
+  ListObjectsV2Command,
+  DeleteObjectsCommand,
+} from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import { getS3Client, getS3BucketName } from './aws-clients';
+
+export interface S3Object {
+  key: string;
+  size?: number;
+  lastModified?: Date;
 }
 
 /**
- * Upload a file to S3 via API route
+ * Upload object to S3
  */
-export async function uploadFileToS3(
-  file: File,
-  key?: string
-): Promise<S3TestResult> {
-  try {
-    const formData = new FormData();
-    formData.append('file', file);
-    if (key) {
-      formData.append('key', key);
-    }
+export async function putObject(
+  key: string,
+  body: Buffer | Uint8Array | string,
+  contentType?: string
+): Promise<{ key: string }> {
+  const client = getS3Client();
+  const bucket = getS3BucketName();
 
-    const response = await fetch('/api/s3/upload', {
-      method: 'POST',
-      body: formData,
-    });
+  const command = new PutObjectCommand({
+    Bucket: bucket,
+    Key: key,
+    Body: body,
+    ContentType: contentType,
+  });
 
-    const result = await response.json();
-
-    if (!response.ok) {
-      return {
-        success: false,
-        message: 'Failed to upload file',
-        error: result.error,
-      };
-    }
-
-    return {
-      success: true,
-      message: 'File uploaded successfully',
-      data: { key: result.key, url: result.url },
-    };
-  } catch (error) {
-    return {
-      success: false,
-      message: 'Failed to upload file',
-      error: error instanceof Error ? error.message : String(error),
-    };
-  }
+  await client.send(command);
+  return { key };
 }
 
 /**
- * Get a presigned URL for an S3 object via API route
+ * Get object from S3
  */
-export async function getS3FileUrl(key: string): Promise<S3TestResult> {
-  try {
-    const response = await fetch('/api/s3/get-url', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ key }),
-    });
+export async function getObject(key: string): Promise<string> {
+  const client = getS3Client();
+  const bucket = getS3BucketName();
 
-    const result = await response.json();
+  const command = new GetObjectCommand({
+    Bucket: bucket,
+    Key: key,
+  });
 
-    if (!response.ok) {
-      return {
-        success: false,
-        message: 'Failed to get file URL',
-        error: result.error,
-      };
-    }
-
-    return {
-      success: true,
-      message: 'URL retrieved successfully',
-      data: { url: result.url, key: result.key },
-    };
-  } catch (error) {
-    return {
-      success: false,
-      message: 'Failed to get file URL',
-      error: error instanceof Error ? error.message : String(error),
-    };
+  const response = await client.send(command);
+  const body = await response.Body?.transformToString();
+  
+  if (!body) {
+    throw new Error('Empty response body');
   }
+
+  return body;
 }
 
 /**
- * List files in S3 via API route
+ * Get presigned URL for S3 object
  */
-export async function listS3Files(prefix?: string): Promise<S3TestResult> {
-  try {
-    const url = new URL('/api/s3/list', window.location.origin);
-    if (prefix) {
-      url.searchParams.set('prefix', prefix);
-    }
+export async function getPresignedUrl(
+  key: string,
+  expiresIn: number = 3600
+): Promise<string> {
+  const client = getS3Client();
+  const bucket = getS3BucketName();
 
-    const response = await fetch(url.toString(), {
-      method: 'GET',
-      headers: { 'Content-Type': 'application/json' },
-    });
+  const command = new GetObjectCommand({
+    Bucket: bucket,
+    Key: key,
+  });
 
-    const result = await response.json();
-
-    if (!response.ok) {
-      return {
-        success: false,
-        message: 'Failed to list files',
-        error: result.error,
-      };
-    }
-
-    return {
-      success: true,
-      message: 'Files listed successfully',
-      data: { items: result.items },
-    };
-  } catch (error) {
-    return {
-      success: false,
-      message: 'Failed to list files',
-      error: error instanceof Error ? error.message : String(error),
-    };
-  }
+  return await getSignedUrl(client, command, { expiresIn });
 }
 
 /**
- * Delete a file from S3 via API route
+ * Delete object from S3
  */
-export async function deleteS3File(key: string): Promise<S3TestResult> {
-  try {
-    const response = await fetch('/api/s3/delete', {
-      method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ key }),
-    });
+export async function deleteObject(key: string): Promise<{ success: boolean }> {
+  const client = getS3Client();
+  const bucket = getS3BucketName();
 
-    const result = await response.json();
+  const command = new DeleteObjectCommand({
+    Bucket: bucket,
+    Key: key,
+  });
 
-    if (!response.ok) {
-      return {
-        success: false,
-        message: 'Failed to delete file',
-        error: result.error,
-      };
-    }
+  await client.send(command);
+  return { success: true };
+}
 
-    return {
-      success: true,
-      message: 'File deleted successfully',
-      data: { key: result.key },
-    };
-  } catch (error) {
-    return {
-      success: false,
-      message: 'Failed to delete file',
-      error: error instanceof Error ? error.message : String(error),
-    };
-  }
+/**
+ * Delete multiple objects from S3
+ */
+export async function deleteObjects(keys: string[]): Promise<{ success: boolean }> {
+  const client = getS3Client();
+  const bucket = getS3BucketName();
+
+  const command = new DeleteObjectsCommand({
+    Bucket: bucket,
+    Delete: {
+      Objects: keys.map(key => ({ Key: key })),
+    },
+  });
+
+  await client.send(command);
+  return { success: true };
+}
+
+/**
+ * List objects in S3 with prefix
+ */
+export async function listObjects(prefix?: string): Promise<S3Object[]> {
+  const client = getS3Client();
+  const bucket = getS3BucketName();
+
+  const command = new ListObjectsV2Command({
+    Bucket: bucket,
+    Prefix: prefix,
+  });
+
+  const response = await client.send(command);
+
+  return (response.Contents || []).map(item => ({
+    key: item.Key || '',
+    size: item.Size,
+    lastModified: item.LastModified,
+  }));
 }

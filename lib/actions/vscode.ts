@@ -1,20 +1,13 @@
+/**
+ * VS Code / File System Service Layer
+ * Business logic for file operations with user-specific paths
+ */
 'use server';
 
-import { S3Client, ListObjectsV2Command, GetObjectCommand, PutObjectCommand, DeleteObjectCommand, DeleteObjectsCommand } from '@aws-sdk/client-s3';
+import { ListObjectsV2Command, GetObjectCommand, PutObjectCommand, DeleteObjectCommand, DeleteObjectsCommand, _Object } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import { getS3Client, getS3BucketName } from '../aws-clients';
 import { requireAuth } from '@/lib/auth-server';
-
-const s3Client = new S3Client({
-  region: process.env.AWS_REGION || 'ap-northeast-2',
-});
-
-const getBucketName = () => {
-  const bucket = process.env.NEXT_PUBLIC_S3_BUCKET;
-  if (!bucket) {
-    throw new Error('S3 bucket name not configured');
-  }
-  return bucket;
-};
 
 export interface FileSystemItem {
   name: string;
@@ -27,7 +20,8 @@ export interface FileSystemItem {
 export async function listFiles(path: string, userId?: string): Promise<FileSystemItem[]> {
   try {
     const effectiveUserId = userId || await requireAuth();
-    const bucket = getBucketName();
+    const s3Client = getS3Client();
+    const bucket = getS3BucketName();
 
     const prefix = path 
       ? `users/${effectiveUserId}/functions/${path}/`
@@ -45,8 +39,8 @@ export async function listFiles(path: string, userId?: string): Promise<FileSyst
 
     // Process files
     (response.Contents || [])
-      .filter(item => item.Key !== prefix && !item.Key?.endsWith('/'))
-      .forEach(item => {
+      .filter((item: _Object) => item.Key !== prefix && !item.Key?.endsWith('/'))
+      .forEach((item: _Object) => {
         const relativePath = item.Key?.replace(prefix, '') || '';
         
         // Add file
@@ -96,7 +90,8 @@ export async function listFiles(path: string, userId?: string): Promise<FileSyst
 export async function readFile(path: string, userId?: string): Promise<string> {
   try {
     const effectiveUserId = userId || await requireAuth();
-    const bucket = getBucketName();
+    const s3Client = getS3Client();
+    const bucket = getS3BucketName();
     const key = `users/${effectiveUserId}/functions/${path}`;
 
     const command = new GetObjectCommand({
@@ -117,7 +112,8 @@ export async function readFile(path: string, userId?: string): Promise<string> {
 export async function writeFile(path: string, content: string, userId?: string): Promise<{ success: boolean }> {
   try {
     const effectiveUserId = userId || await requireAuth();
-    const bucket = getBucketName();
+    const s3Client = getS3Client();
+    const bucket = getS3BucketName();
     const key = `users/${effectiveUserId}/functions/${path}`;
 
     const command = new PutObjectCommand({
@@ -140,7 +136,8 @@ export async function writeFile(path: string, content: string, userId?: string):
 export async function createFile(path: string, isDirectory: boolean, userId?: string): Promise<{ success: boolean }> {
   try {
     const effectiveUserId = userId || await requireAuth();
-    const bucket = getBucketName();
+    const s3Client = getS3Client();
+    const bucket = getS3BucketName();
     const key = isDirectory
       ? `users/${effectiveUserId}/functions/${path}/`
       : `users/${effectiveUserId}/functions/${path}`;
@@ -165,7 +162,8 @@ export async function createFile(path: string, isDirectory: boolean, userId?: st
 export async function deleteFile(path: string, userId?: string): Promise<{ success: boolean }> {
   try {
     const effectiveUserId = userId || await requireAuth();
-    const bucket = getBucketName();
+    const s3Client = getS3Client();
+    const bucket = getS3BucketName();
 
     // Check if it's a directory by listing contents
     const listCommand = new ListObjectsV2Command({
@@ -191,7 +189,7 @@ export async function deleteFile(path: string, userId?: string): Promise<{ succe
       const deleteCommand = new DeleteObjectsCommand({
         Bucket: bucket,
         Delete: {
-          Objects: objects.map(obj => ({ Key: obj.Key })),
+          Objects: objects.map((obj: _Object) => ({ Key: obj.Key })),
         },
       });
       await s3Client.send(deleteCommand);
@@ -208,7 +206,8 @@ export async function deleteFile(path: string, userId?: string): Promise<{ succe
 export async function getUploadUrl(path: string, userId?: string): Promise<{ url: string; key: string }> {
   try {
     const effectiveUserId = userId || await requireAuth();
-    const bucket = getBucketName();
+    const s3Client = getS3Client();
+    const bucket = getS3BucketName();
     const key = `users/${effectiveUserId}/functions/${path}`;
 
     const command = new PutObjectCommand({
