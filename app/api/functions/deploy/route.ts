@@ -11,7 +11,7 @@ export async function POST(request: NextRequest) {
       // environmentVariables, 
       // sourceVersion,
       // buildspecOverride,
-      customRoutes = '/',
+      customRoutes = '',
       waitForCompletion = false
     } = body;
 
@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
     const envVars: Record<string, string> = {
       FUNCTION_ID: functionId,
       USER_ID: userId,
-      CUSTOM_ROUTES: customRoutes,
+      CUSTOM_ROUTES: customRoutes.replace(/[\s\/]+/g, ''), // Remove whitespace/newlines/slashes
       // ...environmentVariables,
     };
 
