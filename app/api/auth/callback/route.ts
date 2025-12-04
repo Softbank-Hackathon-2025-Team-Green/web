@@ -64,8 +64,14 @@ export async function GET(request: NextRequest) {
     console.log('Token exchange successful, tokens received:', Object.keys(tokens));
 
     // Set tokens in HTTP-only cookies
-    console.log('requestUrl.origin: ', requestUrl.origin);
-    const response = NextResponse.redirect(new URL('/home', requestUrl.origin));
+    // Get the actual host from CloudFront/proxy headers
+    const forwardedHost = request.headers.get('x-forwarded-host');
+    const forwardedProto = request.headers.get('x-forwarded-proto') || 'https';
+    const baseUrl = forwardedHost 
+      ? `${forwardedProto}://${forwardedHost}`
+      : requestUrl.origin;
+    console.log('Redirecting to:', baseUrl, { forwardedHost, forwardedProto, origin: requestUrl.origin });
+    const response = NextResponse.redirect(new URL('/home', baseUrl));
     
     // Set access token (expires in 1 hour typically)
     response.cookies.set('access_token', tokens.access_token, {
