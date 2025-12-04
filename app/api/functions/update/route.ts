@@ -6,8 +6,8 @@ export async function PUT(request: NextRequest) {
   try {
     const userId = await requireAuth();
     const body = await request.json();
-    const { functionId, name, description, runtime, httpRoute, environmentVariables, status } = body;
-
+    const { functionId, name, description, runtime, httpRoute, environmentVariables } = body;
+    const status = "not-deployed";
     if (!functionId) {
       return NextResponse.json({ error: 'Function ID is required' }, { status: 400 });
     }

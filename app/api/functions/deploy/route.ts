@@ -6,34 +6,32 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { 
       functionId, 
-      projectName,
-      environmentVariables, 
-      sourceVersion,
-      buildspecOverride,
-      waitForCompletion = false 
+      // projectName,
+      // environmentVariables, 
+      // sourceVersion,
+      // buildspecOverride,
+      // waitForCompletion = false 
+      waitForCompletion = false
     } = body;
 
     if (!functionId) {
       return NextResponse.json({ error: 'Function ID is required' }, { status: 400 });
     }
 
-    if (!projectName) {
-      return NextResponse.json({ error: 'Project name is required' }, { status: 400 });
-    }
-
-    console.log('Deploying function:', functionId, 'via CodeBuild project:', projectName);
+    console.log('Deploying function:', functionId, 'via CodeBuild project');
 
     // Prepare environment variables for the build
     const envVars: Record<string, string> = {
       FUNCTION_ID: functionId,
-      ...environmentVariables,
+      // ...environmentVariables,
     };
 
     const buildParams: StartBuildParams = {
-      projectName,
+      //projectName,
+      projectName: 'cutty-x-infra-dev-build',
       environmentVariables: envVars,
-      sourceVersion,
-      buildspecOverride,
+      //sourceVersion,
+      //buildspecOverride,
     };
 
     // Start the CodeBuild project

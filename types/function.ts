@@ -26,6 +26,13 @@ export interface FunctionMetadata {
     x: number;
     y: number;
   };
+  // Deployment related fields
+  deploymentUrl?: string;
+  customRoutes?: string[];
+  lastDeployedAt?: string;
+  deploymentMessage?: string;
+  deploymentError?: string;
+  lastDeployAttemptAt?: string;
 }
 
 export interface FunctionRunLog {
