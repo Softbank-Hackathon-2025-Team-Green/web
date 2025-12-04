@@ -10,16 +10,6 @@ import { LambdaClient } from '@aws-sdk/client-lambda';
 import { CodeBuildClient } from '@aws-sdk/client-codebuild';
 import { CognitoIdentityProviderClient } from '@aws-sdk/client-cognito-identity-provider';
 
-/**
- * Get AWS credentials configuration from environment variables
- */
-function getAwsCredentials() {
-  return {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID || '',
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || '',
-    sessionToken: process.env.AWS_SESSION_TOKEN,
-  };
-}
 
 /**
  * Get AWS region from environment variables
@@ -34,7 +24,6 @@ function getAwsRegion(): string {
 function getBaseConfig() {
   return {
     region: getAwsRegion(),
-    credentials: getAwsCredentials(),
   };
 }
 

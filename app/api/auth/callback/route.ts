@@ -64,6 +64,7 @@ export async function GET(request: NextRequest) {
     console.log('Token exchange successful, tokens received:', Object.keys(tokens));
 
     // Set tokens in HTTP-only cookies
+    console.log('requestUrl.origin: ', requestUrl.origin);
     const response = NextResponse.redirect(new URL('/home', requestUrl.origin));
     
     // Set access token (expires in 1 hour typically)
