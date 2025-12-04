@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
 
     const buildParams: StartBuildParams = {
       //projectName,
-      projectName: 'cutty-x-infra-dev-build',
+      projectName: process.env.NEXT_PUBLIC_CODEBUILD_PROJECT_NAME || 'my-codebuild-project',
       environmentVariables: envVars,
       //sourceVersion,
       //buildspecOverride,
