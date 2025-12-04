@@ -1,32 +1,11 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
-import { DynamoDBDocumentClient, ScanCommand } from '@aws-sdk/lib-dynamodb';
+import { NextResponse } from 'next/server';
+import { listFunctions } from '@/lib/actions/functions';
+import { requireAuth } from '@/lib/auth-server';
 
-const client = new DynamoDBClient({
-  region: process.env.AWS_REGION || 'ap-northeast-2',
-});
-
-const docClient = DynamoDBDocumentClient.from(client);
-
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
-    const searchParams = request.nextUrl.searchParams;
-    const userId = searchParams.get('userId') || 'test-user-123';
-
-    const tableName = process.env.NEXT_PUBLIC_DYNAMODB_TABLE;
-    if (!tableName) {
-      return NextResponse.json({ error: 'DynamoDB table not configured' }, { status: 500 });
-    }
-
-    // Scan DynamoDB table for all functions
-    // In production, you might want to add a userId filter or use a GSI
-    const command = new ScanCommand({
-      TableName: tableName,
-    });
-
-    const response = await docClient.send(command);
-    const functions = response.Items || [];
-    
+    const userId = await requireAuth();
+    const functions = await listFunctions(userId);
     return NextResponse.json(functions);
   } catch (error) {
     console.error('Error listing functions:', error);

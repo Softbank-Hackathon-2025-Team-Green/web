@@ -17,7 +17,7 @@ export default function FunctionDetailPage() {
 
   const loadFunctionData = async () => {
     try {
-      const response = await fetch(`/api/functions/get?userId=test-user-123&functionId=${functionId}`);
+      const response = await fetch(`/api/functions/get?functionId=${functionId}`);
       const data = await response.json();
       setFunctionData(data);
     } catch (error) {

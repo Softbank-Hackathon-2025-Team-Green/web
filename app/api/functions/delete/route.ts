@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { deleteFunction } from '@/lib/actions/functions';
+import { requireAuth } from '@/lib/auth-server';
 
 export async function DELETE(request: NextRequest) {
   try {
+    const userId = await requireAuth();
     const body = await request.json();
     const { functionId } = body;
 
@@ -9,17 +12,15 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'Function ID is required' }, { status: 400 });
     }
 
-    // In production:
-    // 1. Delete Lambda function
-    // 2. Delete S3 code files
-    // 3. Delete DynamoDB metadata
-    // 4. Remove API Gateway routes
-
-    console.log('Deleting function:', functionId);
+    await deleteFunction(functionId, userId);
+    console.log('Function deleted:', functionId);
 
     return NextResponse.json({ success: true, message: 'Function deleted' });
   } catch (error) {
     console.error('Error deleting function:', error);
-    return NextResponse.json({ error: 'Failed to delete function' }, { status: 500 });
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'Failed to delete function' },
+      { status: 500 }
+    );
   }
 }

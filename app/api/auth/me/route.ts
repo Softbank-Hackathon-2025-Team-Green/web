@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getCurrentUser, fetchAuthSession } from '@/lib/auth-utils';
+import { getUserInfo } from '@/lib/auth-server';
 
 /**
  * GET /api/auth/me
@@ -7,16 +7,19 @@ import { getCurrentUser, fetchAuthSession } from '@/lib/auth-utils';
  */
 export async function GET() {
   try {
-    const user = await getCurrentUser();
-    const session = await fetchAuthSession();
+    const userInfo = await getUserInfo();
+    
+    if (!userInfo) {
+      return NextResponse.json(
+        { error: 'Not authenticated' },
+        { status: 401 }
+      );
+    }
     
     return NextResponse.json({
-      userId: user.userId,
-      username: user.username,
-      session: session ? {
-        tokens: !!session.tokens,
-        credentials: !!session.credentials,
-      } : null,
+      userId: userInfo.userId,
+      email: userInfo.email,
+      username: userInfo.username,
     });
   } catch {
     return NextResponse.json(

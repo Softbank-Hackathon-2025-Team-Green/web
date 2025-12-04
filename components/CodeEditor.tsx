@@ -13,11 +13,10 @@ interface FileTreeNode extends FileSystemItem {
 
 interface CodeEditorProps {
   projectPath: string; // e.g., 'func-uuid' - function ID, path relative to user's functions directory
-  userId: string;
   onSave?: (files: { path: string; content: string }[]) => void;
 }
 
-export default function CodeEditor({ projectPath, userId, onSave }: CodeEditorProps) {
+export default function CodeEditor({ projectPath, onSave }: CodeEditorProps) {
   const [fileTree, setFileTree] = useState<FileTreeNode[]>([]);
   const [currentFile, setCurrentFile] = useState<string>('');
   const [currentContent, setCurrentContent] = useState<string>('');
@@ -67,11 +66,11 @@ export default function CodeEditor({ projectPath, userId, onSave }: CodeEditorPr
   // Load directory tree
   const loadDirectoryTree = async () => {
     try {
-      console.log('Loading directory tree for:', projectPath, 'userId:', userId);
+      console.log('Loading directory tree for:', projectPath);
       const response = await fetch('/api/vscode/list', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ path: projectPath, userId }),
+        body: JSON.stringify({ path: projectPath }),
       });
       
       if (response.ok) {
@@ -93,7 +92,7 @@ export default function CodeEditor({ projectPath, userId, onSave }: CodeEditorPr
   useEffect(() => {
     loadDirectoryTree();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [projectPath, userId]);
+  }, [projectPath]);
 
   // Toggle folder expansion
   const toggleFolder = (path: string) => {
@@ -147,7 +146,7 @@ export default function CodeEditor({ projectPath, userId, onSave }: CodeEditorPr
       const response = await fetch('/api/vscode/read', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ path: fullPath, userId }),
+        body: JSON.stringify({ path: fullPath }),
       });
 
       if (response.ok) {
@@ -244,7 +243,7 @@ export default function CodeEditor({ projectPath, userId, onSave }: CodeEditorPr
       const response = await fetch('/api/vscode/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ path: fullPath, isDirectory: isFolder, userId }),
+        body: JSON.stringify({ path: fullPath, isDirectory: isFolder }),
       });
 
       if (response.ok) {

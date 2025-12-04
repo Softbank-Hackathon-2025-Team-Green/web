@@ -1,21 +1,11 @@
-import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { NextRequest, NextResponse } from 'next/server';
-
-const s3Client = new S3Client({
-  region: process.env.AWS_REGION || 'ap-northeast-2',
-});
+import { writeFile } from '@/lib/actions/vscode';
+import { requireAuth } from '@/lib/auth-server';
 
 export async function POST(request: NextRequest) {
   try {
-    const { path, content, userId } = await request.json();
-    const bucket = process.env.NEXT_PUBLIC_S3_BUCKET;
-
-    if (!bucket) {
-      return NextResponse.json(
-        { error: 'S3 bucket name not configured' },
-        { status: 500 }
-      );
-    }
+    const userId = await requireAuth();
+    const { path, content } = await request.json();
 
     if (!path) {
       return NextResponse.json(
@@ -24,44 +14,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const key = `users/${userId}/functions/${path}`;
-
-    // Determine content type based on file extension
-    const extension = path.split('.').pop()?.toLowerCase();
-    const contentTypeMap: Record<string, string> = {
-      js: 'application/javascript',
-      jsx: 'application/javascript',
-      ts: 'application/typescript',
-      tsx: 'application/typescript',
-      json: 'application/json',
-      html: 'text/html',
-      css: 'text/css',
-      md: 'text/markdown',
-      txt: 'text/plain',
-      py: 'text/x-python',
-      java: 'text/x-java',
-      cpp: 'text/x-c++src',
-      c: 'text/x-csrc',
-    };
-
-    const contentType = contentTypeMap[extension || ''] || 'text/plain';
-
-    const command = new PutObjectCommand({
-      Bucket: bucket,
-      Key: key,
-      Body: content,
-      ContentType: contentType,
-    });
-
-    await s3Client.send(command);
+    await writeFile(path, content || '', userId);
 
     return NextResponse.json({
       success: true,
       path,
-      key,
     });
   } catch (error) {
-    console.error('Error writing file to S3:', error);
+    console.error('Error writing file:', error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }

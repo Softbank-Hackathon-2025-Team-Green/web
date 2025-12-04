@@ -1,41 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
-import { DynamoDBDocumentClient, GetCommand } from '@aws-sdk/lib-dynamodb';
-
-const client = new DynamoDBClient({
-  region: process.env.AWS_REGION || 'ap-northeast-2',
-});
-
-const docClient = DynamoDBDocumentClient.from(client);
+import { getFunction } from '@/lib/actions/functions';
+import { requireAuth } from '@/lib/auth-server';
 
 export async function GET(request: NextRequest) {
   try {
+    const userId = await requireAuth();
     const searchParams = request.nextUrl.searchParams;
-    const userId = searchParams.get('userId');
     const functionId = searchParams.get('functionId');
     
     if (!functionId) {
       return NextResponse.json({ error: 'Function ID is required' }, { status: 400 });
     }
 
-    const tableName = process.env.NEXT_PUBLIC_DYNAMODB_TABLE;
-    if (!tableName) {
-      return NextResponse.json({ error: 'DynamoDB table not configured' }, { status: 500 });
-    }
+    const functionData = await getFunction(functionId, userId);
 
-    // Fetch from DynamoDB
-    const command = new GetCommand({
-      TableName: tableName,
-      Key: { userId, functionId },
-    });
-
-    const response = await docClient.send(command);
-
-    if (!response.Item) {
+    if (!functionData) {
       return NextResponse.json({ error: 'Function not found' }, { status: 404 });
     }
 
-    return NextResponse.json(response.Item);
+    return NextResponse.json(functionData);
   } catch (error) {
     console.error('Error getting function:', error);
     return NextResponse.json(

@@ -1,7 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { configureAmplify, ASSUMED_USER_ID } from '@/lib/amplify-config';
+import { useState } from 'react';
 import {
   uploadFileToS3,
   getS3FileUrl,
@@ -44,10 +43,6 @@ export default function TestPage() {
   const [apiEndpoint, setApiEndpoint] = useState('');
   const [useIAM, setUseIAM] = useState(true);
 
-  useEffect(() => {
-    configureAmplify();
-  }, []);
-
   const handleTest = async (testFn: () => Promise<TestResult>) => {
     setLoading(true);
     setResult(null);
@@ -68,14 +63,9 @@ export default function TestPage() {
   return (
     <div className="min-h-screen bg-gray-50 p-8">
       <div className="max-w-6xl mx-auto">
-        <h1 className="text-3xl font-bold mb-8 text-gray-900">AWS Amplify Service Tests</h1>
+        <h1 className="text-3xl font-bold mb-8 text-gray-900">AWS Service Tests</h1>
 
         {/* Tabs */}
-        <div className="flex gap-2 mb-6 border-b">
-          <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded">
-            <p className="text-sm text-blue-800"><strong>Assumed User ID:</strong> {ASSUMED_USER_ID}</p>
-          </div>
-        </div>
         <div className="flex gap-2 mb-6 border-b">
           {(['s3', 'dynamodb', 'lambda'] as const).map((tab) => (
             <button

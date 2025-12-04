@@ -5,8 +5,6 @@ import { useParams, useRouter } from 'next/navigation';
 import { RuntimeImage, EnvironmentVariable, FunctionMetadata } from '@/types/function';
 import CodeEditor from '@/components/CodeEditor';
 
-const userId = 'test-user-123';
-
 export default function EditFunctionPage() {
   const params = useParams();
   const router = useRouter();
@@ -36,7 +34,7 @@ export default function EditFunctionPage() {
 
   const loadFunctionData = async () => {
     try {
-      const response = await fetch(`/api/functions/get?userId=${userId}&functionId=${functionId}`);
+      const response = await fetch(`/api/functions/get?functionId=${functionId}`);
       if (!response.ok) {
         throw new Error('Failed to load function');
       }
@@ -87,7 +85,6 @@ export default function EditFunctionPage() {
           body: JSON.stringify({
             path: file.path,
             content: file.content,
-            userId,
           }),
         });
         
@@ -99,7 +96,6 @@ export default function EditFunctionPage() {
       // Then update function metadata
       const updateData = {
         functionId,
-        userId,
         name,
         description,
         runtime,
@@ -258,7 +254,6 @@ export default function EditFunctionPage() {
               <div className="border border-gray-300 rounded-md overflow-hidden" style={{ height: '500px' }}>
                 <CodeEditor
                   projectPath={functionId}
-                  userId={userId}
                   onSave={(files) => {
                     setModifiedFiles(files);
                   }}

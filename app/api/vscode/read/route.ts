@@ -1,21 +1,11 @@
-import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3';
 import { NextRequest, NextResponse } from 'next/server';
-
-const s3Client = new S3Client({
-  region: process.env.AWS_REGION || 'ap-northeast-2',
-});
+import { readFile } from '@/lib/actions/vscode';
+import { requireAuth } from '@/lib/auth-server';
 
 export async function POST(request: NextRequest) {
   try {
-    const { path, userId } = await request.json();
-    const bucket = process.env.NEXT_PUBLIC_S3_BUCKET;
-
-    if (!bucket) {
-      return NextResponse.json(
-        { error: 'S3 bucket name not configured' },
-        { status: 500 }
-      );
-    }
+    const userId = await requireAuth();
+    const { path } = await request.json();
 
     if (!path) {
       return NextResponse.json(
@@ -24,24 +14,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const key = `users/${userId}/functions/${path}`;
-
-    const command = new GetObjectCommand({
-      Bucket: bucket,
-      Key: key,
-    });
-
-    const response = await s3Client.send(command);
-    const content = await response.Body?.transformToString();
+    const content = await readFile(path, userId);
 
     return NextResponse.json({
       success: true,
       path,
-      content: content || '',
-      contentType: response.ContentType,
+      content,
     });
   } catch (error) {
-    console.error('Error reading file from S3:', error);
+    console.error('Error reading file:', error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }

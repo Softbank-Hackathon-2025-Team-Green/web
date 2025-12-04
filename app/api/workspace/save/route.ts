@@ -1,38 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
-import { DynamoDBDocumentClient, PutCommand } from '@aws-sdk/lib-dynamodb';
-
-const client = new DynamoDBClient({
-  region: process.env.AWS_REGION || 'ap-northeast-2',
-});
-
-const docClient = DynamoDBDocumentClient.from(client);
+import { saveWorkspace } from '@/lib/actions/workspace';
+import { requireAuth } from '@/lib/auth-server';
 
 export async function POST(request: NextRequest) {
   try {
+    const userId = await requireAuth();
     const body = await request.json();
-    const { userId, nodes, edges, viewport } = body;
+    const { nodes, edges, viewport } = body;
 
-    if (!userId) {
-      return NextResponse.json({ error: 'userId is required' }, { status: 400 });
-    }
-
-    const tableName = process.env.NEXT_PUBLIC_DYNAMODB_WORKSPACE_TABLE || 'sbht-user-progress';
-
-    // Save workspace state to DynamoDB
-    const command = new PutCommand({
-      TableName: tableName,
-      Item: {
-        userId,
-        nodes: nodes || [],
-        edges: edges || [],
-        viewport: viewport || { x: 0, y: 0, zoom: 1 },
-        updatedAt: new Date().toISOString(),
-      },
-    });
-
-    await docClient.send(command);
-    console.log('Workspace saved:', userId);
+    await saveWorkspace({ nodes, edges, viewport }, userId);
 
     return NextResponse.json({ success: true, message: 'Workspace saved' });
   } catch (error) {
