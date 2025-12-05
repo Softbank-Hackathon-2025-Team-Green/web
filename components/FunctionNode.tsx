@@ -19,6 +19,8 @@ const statusColors = {
   'not-deployed': 'bg-yellow-100 border-yellow-500 text-yellow-800',
   unavailable: 'bg-gray-100 border-gray-500 text-gray-800',
   uninitialized: 'bg-gray-100 border-gray-500 text-gray-800',
+  deploying: 'bg-orange-100 border-orange-500 text-orange-800 animate-pulse',
+  deployed: 'bg-green-100 border-green-500 text-green-800',
 };
 
 const statusIcons = {
@@ -27,7 +29,9 @@ const statusIcons = {
   error: '⚠',
   'not-deployed': '⚡',
   unavailable: '⊗',
-    uninitialized: '-',
+  uninitialized: '-',
+  deploying: '🚀',
+  deployed: '✓',
 };
 
 export default function FunctionNode({ data }: FunctionNodeProps) {
