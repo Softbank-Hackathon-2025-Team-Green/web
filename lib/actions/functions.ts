@@ -48,7 +48,7 @@ export async function getFunction(functionId: string, userId?: string): Promise<
 
 export async function createFunction(functionData: FunctionMetadata): Promise<{ functionId: string; success: boolean }> {
   try {
-    if (!functionData.functionId || !functionData.name || !functionData.runtime || !functionData.httpRoute) {
+    if (!functionData.functionId || !functionData.name || !functionData.runtime) {
       throw new Error('Missing required fields');
     }
 

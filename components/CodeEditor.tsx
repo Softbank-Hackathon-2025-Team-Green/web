@@ -31,6 +31,8 @@ export default function CodeEditor({ projectPath, onSave }: CodeEditorProps) {
   const [reviewDialogOpen, setReviewDialogOpen] = useState(false);
   const [reviewedCode, setReviewedCode] = useState<string>('');
   const [hasSecurityIssues, setHasSecurityIssues] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; path: string; name: string } | null>(null);
 
   const showMessage = (type: 'success' | 'error', text: string) => {
     setMessage({ type, text });
@@ -241,6 +243,15 @@ export default function CodeEditor({ projectPath, onSave }: CodeEditorProps) {
 
     try {
       const fullPath = `${projectPath}/${fileName}`;
+      
+      // Determine default content for specific files
+      let initialContent = '';
+      if (!isFolder && fileName.toLowerCase() === 'index.js') {
+        initialContent = `exports.handler = async (req, res) => {
+    return res.send("Hello World!");
+};`;
+      }
+      
       const response = await fetch('/api/vscode/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -249,12 +260,122 @@ export default function CodeEditor({ projectPath, onSave }: CodeEditorProps) {
 
       if (response.ok) {
         loadDirectoryTree();
+        
+        // If we have initial content, write it to the file
+        if (initialContent && !isFolder) {
+          const writeResponse = await fetch('/api/vscode/write', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ path: fullPath, content: initialContent }),
+          });
+          
+          if (writeResponse.ok) {
+            // Open the file with the initial content
+            setOpenFiles(new Map(openFiles.set(fileName, initialContent)));
+            setCurrentFile(fileName);
+            setCurrentContent(initialContent);
+            setLanguage(getLanguageFromPath(fileName));
+          }
+        }
       } else {
         showMessage('error', 'Failed to create file');
       }
     } catch (error) {
       console.error('Create error:', error);
       showMessage('error', 'Failed to create file');
+    }
+  };
+
+  // Handle file upload from user's computer
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
+
+    try {
+      for (const file of Array.from(files)) {
+        const fileName = file.name;
+        const content = await file.text();
+        const fullPath = `${projectPath}/${fileName}`;
+
+        // Create the file
+        const createResponse = await fetch('/api/vscode/create', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ path: fullPath, isDirectory: false }),
+        });
+
+        if (!createResponse.ok) {
+          showMessage('error', `Failed to create ${fileName}`);
+          continue;
+        }
+
+        // Write the content
+        const writeResponse = await fetch('/api/vscode/write', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ path: fullPath, content }),
+        });
+
+        if (writeResponse.ok) {
+          showMessage('success', `Uploaded ${fileName}`);
+        } else {
+          showMessage('error', `Failed to upload ${fileName}`);
+        }
+      }
+
+      // Reload directory to show new files
+      loadDirectoryTree();
+    } catch (error) {
+      console.error('File upload error:', error);
+      showMessage('error', 'Failed to upload file');
+    } finally {
+      // Reset input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
+  // Delete file or folder
+  const deleteFile = async (filePath: string, fileName: string) => {
+    const confirmed = window.confirm(
+      `Are you sure you want to delete "${fileName}"?\n\nThis will permanently delete the file from S3 and cannot be undone.`
+    );
+    
+    if (!confirmed) return;
+
+    try {
+      const fullPath = `${projectPath}/${filePath}`;
+      const response = await fetch('/api/vscode/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ path: fullPath }),
+      });
+
+      if (response.ok) {
+        // Close the file if it's currently open
+        if (currentFile === filePath) {
+          setCurrentFile('');
+          setCurrentContent('');
+        }
+        
+        // Remove from open files and modified files
+        const newOpenFiles = new Map(openFiles);
+        newOpenFiles.delete(filePath);
+        setOpenFiles(newOpenFiles);
+        
+        const newModifiedFiles = new Map(modifiedFiles);
+        newModifiedFiles.delete(filePath);
+        setModifiedFiles(newModifiedFiles);
+        
+        showMessage('success', `Deleted ${fileName}`);
+        loadDirectoryTree();
+      } else {
+        showMessage('error', `Failed to delete ${fileName}`);
+      }
+    } catch (error) {
+      console.error('Delete error:', error);
+      showMessage('error', `Failed to delete ${fileName}`);
     }
   };
 
@@ -266,11 +387,15 @@ export default function CodeEditor({ projectPath, onSave }: CodeEditorProps) {
     return (
       <div key={node.path}>
         <div
-          className={`flex items-center gap-1 px-2 py-1 hover:bg-gray-700 cursor-pointer ${
+          className={`flex items-center gap-1 px-2 py-1 hover:bg-gray-700 cursor-pointer relative ${
             currentFile === node.path ? 'bg-gray-700' : ''
           }`}
           style={{ paddingLeft: `${level * 12 + 8}px` }}
           onClick={() => isFolder ? toggleFolder(node.path) : openFile(node.path)}
+          onContextMenu={(e) => {
+            e.preventDefault();
+            setContextMenu({ x: e.clientX, y: e.clientY, path: node.path, name: node.name });
+          }}
         >
           {isFolder && (
             <span className="text-xs text-gray-400">
@@ -294,11 +419,30 @@ export default function CodeEditor({ projectPath, onSave }: CodeEditorProps) {
   };
 
   return (
-    <div className="h-full flex flex-col bg-gray-900">
+    <div className="h-full flex flex-col bg-gray-900" onClick={() => setContextMenu(null)}>
       {/* Message */}
       {message && (
         <div className={`px-4 py-2 ${message.type === 'success' ? 'bg-green-600' : 'bg-red-600'} text-white text-sm`}>
           {message.text}
+        </div>
+      )}
+
+      {/* Context Menu */}
+      {contextMenu && (
+        <div
+          className="fixed bg-gray-800 border border-gray-700 rounded shadow-lg py-1 z-50"
+          style={{ left: contextMenu.x, top: contextMenu.y }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <button
+            onClick={() => {
+              deleteFile(contextMenu.path, contextMenu.name);
+              setContextMenu(null);
+            }}
+            className="w-full px-4 py-2 text-left text-sm text-red-400 hover:bg-gray-700 flex items-center gap-2"
+          >
+            🗑️ Delete
+          </button>
         </div>
       )}
 
@@ -322,9 +466,22 @@ export default function CodeEditor({ projectPath, onSave }: CodeEditorProps) {
                 setDialogConfig({ title: 'Create New Folder', placeholder: 'folder-name', isFolder: true });
                 setDialogOpen(true);
               }}
-              className="w-full px-2 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700"
+              className="w-full px-2 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 mb-1"
             >
               + New Folder
+            </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              multiple
+              onChange={handleFileUpload}
+              className="hidden"
+            />
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="w-full px-2 py-1 text-xs bg-green-600 text-white rounded hover:bg-green-700"
+            >
+              📤 Upload File
             </button>
           </div>
 

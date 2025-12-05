@@ -168,7 +168,7 @@ export default function HomeClient({ userId, userEmail, initialFunctions, initia
         description: '',
         runtime: 'node-20' as const,
         environmentVariables: [],
-        httpRoute: `/${name.toLowerCase().replace(/\s+/g, '-')}`,
+        httpRoute: '',
         sourceFiles: [functionId],
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
@@ -212,6 +212,19 @@ export default function HomeClient({ userId, userEmail, initialFunctions, initia
       setNodes((nds) => [...nds, newNode]);
       setFunctions((fns) => [...fns, functionData]);
       setDrawMode(null);
+      
+      // Immediately save workspace with the new function node
+      const viewport = getViewport();
+      await fetch('/api/workspace/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId,
+          nodes: [...nodes, newNode],
+          edges,
+          viewport,
+        }),
+      });
       
       console.log('Function node created on canvas:', functionId);
     } catch (error) {

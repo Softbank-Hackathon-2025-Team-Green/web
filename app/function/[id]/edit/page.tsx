@@ -14,6 +14,7 @@ export default function EditFunctionPage() {
   const [description, setDescription] = useState('');
   const [runtime, setRuntime] = useState<RuntimeImage>('node-20');
   const [httpRoute, setHttpRoute] = useState('');
+  const [originalHttpRoute, setOriginalHttpRoute] = useState('');
   const [envVars, setEnvVars] = useState<EnvironmentVariable[]>([]);
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -44,6 +45,7 @@ export default function EditFunctionPage() {
       setDescription(data.description);
       setRuntime(data.runtime);
       setHttpRoute(data.httpRoute);
+      setOriginalHttpRoute(data.httpRoute);
       setEnvVars(data.environmentVariables || []);
       
       setIsLoading(false);
@@ -192,12 +194,18 @@ export default function EditFunctionPage() {
                 <input
                   type="text"
                   value={httpRoute}
-                  onChange={(e) => setHttpRoute(e.target.value)}
-                  className="flex-1 px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 text-black"
+                  onChange={(e) => {
+                    const value = e.target.value.replace(/[\s\/]/g, '');
+                    setHttpRoute(value);
+                  }}
+                  disabled={!!originalHttpRoute}
+                  className="flex-1 px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 text-black disabled:bg-gray-100 disabled:cursor-not-allowed"
                   placeholder="my-function"
                   required
                 />
               </div>
+              <p className="text-xs text-gray-500 mt-1">HTTP route cannot be changed after creation</p>
+              
             </div>
 
             {/* Environment Variables */}
