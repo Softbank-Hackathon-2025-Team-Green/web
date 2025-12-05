@@ -20,6 +20,19 @@ export default function FunctionDetailPage() {
   const [isRunning, setIsRunning] = useState(false);
   const [activeTab, setActiveTab] = useState<TabType>('overview');
   const [isLoadingLogs, setIsLoadingLogs] = useState(false);
+  const [userId, setUserId] = useState<string>('');
+
+  const loadUserId = async () => {
+    try {
+      const authResponse = await fetch('/api/auth/me');
+      if (authResponse.ok) {
+        const { userId: uid } = await authResponse.json();
+        setUserId(uid);
+      }
+    } catch (error) {
+      console.error('Failed to load user ID:', error);
+    }
+  };
 
   const loadFunctionData = async () => {
     try {
@@ -61,6 +74,7 @@ export default function FunctionDetailPage() {
   };
 
   useEffect(() => {
+    loadUserId();
     loadFunctionData();
     loadRunLogs();
     if (activeTab === 'deploy') {
@@ -182,15 +196,18 @@ export default function FunctionDetailPage() {
             }`}>
               {functionData.status}
             </span>
-            {functionData.httpRoute && (
-              <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium">
-                /{functionData.httpRoute}
-              </span>
-            )}
             <span className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm font-medium">
               Rev: {functionData.currentRevision || 'N/A'}
             </span>
           </div>
+
+          {functionData.httpRoute && userId && (
+            <div className="mb-4">
+              <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-lg text-sm font-medium break-all">
+                🔗 http://functions.cuttyx.oriduckduck.site/{userId}/{functionData.httpRoute}
+              </span>
+            </div>
+          )}
 
           <div className="flex gap-3">
             <button
