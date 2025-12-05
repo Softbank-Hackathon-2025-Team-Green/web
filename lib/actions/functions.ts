@@ -78,6 +78,7 @@ export async function updateFunction(
     httpRoute?: string;
     environmentVariables?: Array<{ key: string; value: string }>;
     status?: string;
+    currentRevision?: string;
   },
   userId?: string
 ): Promise<{ success: boolean; data: FunctionMetadata }> {
@@ -119,6 +120,11 @@ export async function updateFunction(
       updateExpressions.push('#status = :status');
       expressionAttributeNames['#status'] = 'status';
       expressionAttributeValues[':status'] = updates.status;
+    }
+
+    if (updates.currentRevision !== undefined) {
+      updateExpressions.push('currentRevision = :currentRevision');
+      expressionAttributeValues[':currentRevision'] = updates.currentRevision;
     }
 
     // Always update the updatedAt timestamp

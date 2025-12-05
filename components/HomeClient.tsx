@@ -184,7 +184,6 @@ export default function HomeClient({ userId, userEmail, initialFunctions, initia
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
         status: 'uninitialized' as const,
-        currentRevision: '0',
         userId,
         position: clickPosition,
       };

@@ -1,6 +1,6 @@
 export type RuntimeImage = 'node-18' | 'node-20' | 'python-3.9' | 'python-3.10' | 'python-3.11';
 
-export type FunctionStatus = 'idle' | 'running' | 'error' | 'not-deployed' | 'unavailable' | 'uninitialized';
+export type FunctionStatus = 'idle' | 'running' | 'error' | 'not-deployed' | 'unavailable' | 'uninitialized' | 'deploying' | 'deployed';
 
 export interface EnvironmentVariable {
   key: string;
@@ -20,7 +20,7 @@ export interface FunctionMetadata {
   updatedAt: string;
   lastRunAt?: string;
   status: FunctionStatus;
-  currentRevision: string;
+  currentRevision?: string;
   userId: string;
   position?: {
     x: number;
