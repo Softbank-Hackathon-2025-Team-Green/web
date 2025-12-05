@@ -1,4 +1,4 @@
-<h1 align="center">Web README</h1>
+# Web README
 
 <details open>
 <summary>🇰🇷 한국어</summary>
