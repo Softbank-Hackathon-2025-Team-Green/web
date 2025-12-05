@@ -1,51 +1,186 @@
-# cutty-x - Function as a Service Platform
+<h1 align="center">Web README</h1>
 
-A modern FaaS (Function as a Service) platform built for the SoftBank Hackathon 2025 in Seoul. Create, deploy, and manage serverless functions with a playful, visual interface.
+<details open>
+<summary>🇰🇷 한국어</summary>
 
-## 🎨 Features
+## 📜 개요
+
+cutty-x는 2025년 소프트뱅크 해커톤을 위해 제작된 최신 FaaS(Function as a Service) 플랫폼입니다. 재미있고 시각적인 인터페이스를 통해 서버리스 함수를 생성, 배포 및 관리할 수 있습니다.
+
+## ✨ 주요 기능
+
+### 시각적 함수 캔버스
+
+-   **Draw.io 스타일 인터페이스**: 무한 캔버스 위에서 함수를 드래그, 드롭하고 배열
+-   **줌 & 팬**: React Flow를 사용한 전체 탐색 제어 및 뷰포트 상태 유지
+-   **노드 유형**: 함수, 텍스트 주석, 그룹화용 사각형
+-   **상태 표시기**: 함수 상태(유휴, 실행 중, 오류, 미배포, 사용 불가)에 대한 시각적 피드백
+-   **자동 저장**: 1초 디바운스로 작업 공간 상태를 DynamoDB에 자동 저장
+-   **영구적인 작업 공간**: 캔버스 위치, 줌 레벨, 모든 노드/엣지 보존
+-   **삭제 키 지원**: 선택한 노드를 Delete 또는 Backspace로 제거 (텍스트 편집 중 실수로 인한 삭제 방지)
+
+### 함수 관리
+
+-   **다중 런타임**: Node.js(18, 20) 및 Python(3.9, 3.10, 3.11) 지원
+-   **환경 변수**: 민감한 값 마스킹 기능이 포함된 함수별 런타임 환경 구성
+-   **HTTP 라우트**: 각 함수에 대한 사용자 정의 API 엔드포인트
+-   **코드 에디터**: 파일 트리 탐색 기능이 있는 Monaco 에디터
+-   **파일 관리**: 파일/폴더 생성, 디렉토리 구조로 코드 구성
+-   **일괄 저장**: 모든 파일 변경 사항을 메모리에서 추적하고 메타데이터와 함께 한 번에 저장
+-   **수정 표시기**: 에디터에서 저장되지 않은 변경 사항에 대한 시각적 피드백
+
+### 보안 및 취약점 검사
+
+-   **AI 기반 분석**: OpenAI 기반 코드 취약점 탐지
+-   **보안 스캐닝**: 무한 루프, 파일 시스템 접근, DDoS 위험 등 검사
+-   **심각도 수준**: 분류된 취약점 보고서 (낮음, 중간, 높음, 심각)
+
+## 🚀 시작하기
+
+### 사전 요구 사항
+
+-   Node.js 18 이상
+-   npm 또는 yarn
+-   AWS 계정 (프로덕션 배포용)
+-   OpenAI API 키 (선택 사항, 취약점 검사용)
+
+### 설치
+
+```bash
+# 저장소 복제
+git clone https://github.com/Softbank-Hackathon-2025-Team-Green/web.git
+cd web
+
+# 의존성 설치
+npm install
+
+# 환경 변수 설정
+cp env.example .env.local
+
+# .env.local에 자격 증명 편집:
+# - S3, DynamoDB, Lambda를 위한 AWS 자격 증명
+# - 취약점 검사를 위한 OpenAI API 키
+
+# 개발 서버 실행
+npm run dev
+```
+
+[http://localhost:3000](http://localhost:3000)을 방문하여 플랫폼을 확인하세요.
+
+</details>
+
+<details>
+<summary>🇯🇵 日本語</summary>
+
+## 📜 概要
+
+cutty-xは、2025年のソフトバンクハッカソン向けに構築された最新のFaaS（Function as a Service）プラットフォームです。楽しく視覚的なインターフェースを通じて、サーバーレス関数を作成、デプロイ、管理できます。
+
+## ✨ 主な機能
+
+### ビジュアル関数キャンバス
+
+-   **Draw.io風インターフェース**: 無限のキャンバス上で関数をドラッグ、ドロップ、配置
+-   **ズーム＆パン**: React Flowを使用した完全なナビゲーション制御とビューポートの永続化
+-   **ノードタイプ**: 関数、テキスト注釈、グループ化用の長方形
+-   **ステータスインジケーター**: 関数の状態（アイドル、実行中、エラー、未デプロイ、利用不可）に関する視覚的フィードバック
+-   **自動保存**: 1秒のデバウンスでワークスペースの状態をDynamoDBに自動保存
+-   **永続的なワークスペース**: キャンバスの位置、ズームレベル、すべてのノード/エッジを保持
+-   **削除キーのサポート**: 選択したノードをDeleteまたはBackspaceで削除（テキスト編集中に誤って削除するのを防ぐ）
+
+### 関数管理
+
+-   **複数のランタイム**: Node.js（18、20）およびPython（3.9、3.10、3.11）をサポート
+-   **環境変数**: 機密性の高い値のマスキング機能を備えた関数ごとのランタイム環境構成
+-   **HTTPルート**: 各関数のカスタムAPIエンドポイント
+-   **コードエディター**: ファイルツリーナビゲーション付きのMonacoエディター
+-   **ファイル管理**: ファイル/フォルダーの作成、ディレクトリー構造によるコードの整理
+-   **一括保存**: すべてのファイル変更をメモリで追跡し、メタデータと一緒に一度に保存
+-   **変更インジケーター**: エディターで保存されていない変更に対する視覚的フィードバック
+
+### セキュリティと脆弱性チェック
+
+-   **AIベースの分析**: OpenAIベースのコード脆弱性検出
+-   **セキュリティスキャン**: 無限ループ、ファイルシステムアクセス、DDoSリスクなどをチェック
+-   **重大度レベル**: 分類された脆弱性レポート（低、中、高、クリティカル）
+
+## 🚀 はじめに
+
+### 前提条件
+
+-   Node.js 18以降
+-   npmまたはyarn
+-   AWSアカウント（本番デプロイ用）
+-   OpenAI APIキー（オプション、脆弱性チェック用）
+
+### インストール
+
+```bash
+# リポジトリをクローン
+git clone https://github.com/Softbank-Hackathon-2025-Team-Green/web.git
+cd web
+
+# 依存関係をインストール
+npm install
+
+# 環境変数を設定
+cp env.example .env.local
+
+# .env.localに資格情報を編集：
+# - S3、DynamoDB、Lambda用のAWS資格情報
+# - 脆弱性チェック用のOpenAI APIキー
+
+# 開発サーバーを実行
+npm run dev
+```
+
+[http://localhost:3000](http://localhost:3000)にアクセスしてプラットフォームをご覧ください。
+
+</details>
+
+<details>
+<summary>🇬🇧 English</summary>
+
+## 📜 Overview
+
+cutty-x is a modern FaaS (Function as a Service) platform built for the SoftBank Hackathon 2025. It allows you to create, deploy, and manage serverless functions with a playful, visual interface.
+
+## ✨ Features
 
 ### Visual Function Canvas
 
-- **Draw.io-like Interface**: Drag, drop, and arrange functions on an infinite canvas
-- **Zoom & Pan**: Full navigation control with React Flow and viewport persistence
-- **Node Types**: Functions, text annotations, and border/grouping rectangles
-- **Status Indicators**: Visual feedback for function states (idle, running, error, not-deployed, unavailable)
-- **Auto-Save**: Workspace state automatically saved to DynamoDB with 1-second debounce
-- **Persistent Workspace**: Canvas position, zoom level, and all nodes/edges are preserved
-- **Delete Key Support**: Remove selected nodes with Delete or Backspace (smart detection prevents accidental deletion while editing text)
+-   **Draw.io-like Interface**: Drag, drop, and arrange functions on an infinite canvas
+-   **Zoom & Pan**: Full navigation control with React Flow and viewport persistence
+-   **Node Types**: Functions, text annotations, and border/grouping rectangles
+-   **Status Indicators**: Visual feedback for function states (idle, running, error, not-deployed, unavailable)
+-   **Auto-Save**: Workspace state automatically saved to DynamoDB with a 1-second debounce
+-   **Persistent Workspace**: Canvas position, zoom level, and all nodes/edges are preserved
+-   **Delete Key Support**: Remove selected nodes with Delete or Backspace (prevents accidental deletion while editing text)
 
 ### Function Management
 
-- **Multiple Runtimes**: Support for Node.js (18, 20) and Python (3.9, 3.10, 3.11)
-- **Environment Variables**: Configure runtime environment per function with sensitive value masking
-- **HTTP Routes**: Custom API endpoints for each function
-- **Code Editor**: Full-featured Monaco editor with file tree navigation
-- **File Management**: Create files/folders, organize code with directory structure
-- **Batch Save**: All file changes tracked in memory and saved together with metadata
-- **Modified Indicator**: Visual feedback showing unsaved changes in the editor
-- **Smart Suggestions**: Monaco autocomplete with proper positioning (no clipping)
-
-### Observability Dashboard
-
-- **Real-time Metrics**: CPU and memory usage tracking during execution
-- **Execution Time**: Detailed performance metrics for each run
-- **Run History**: Complete log of all function executions
-- **Visual Charts**: Interactive graphs powered by Recharts
+-   **Multiple Runtimes**: Support for Node.js (18, 20) and Python (3.9, 3.10, 3.11)
+-   **Environment Variables**: Configure runtime environment per function with sensitive value masking
+-   **HTTP Routes**: Custom API endpoints for each function
+-   **Code Editor**: Full-featured Monaco editor with file tree navigation
+-   **File Management**: Create files/folders, organize code with directory structure
+-   **Batch Save**: All file changes are tracked in memory and saved together with metadata
+-   **Modified Indicator**: Visual feedback for unsaved changes in the editor
 
 ### Security & Vulnerability Checks
 
-- **AI-Powered Analysis**: OpenAI-based code vulnerability detection
-- **Security Scanning**: Check for infinite loops, filesystem access, DDoS risks, and more
-- **Severity Levels**: Categorized vulnerability reports (low, medium, high, critical)
+-   **AI-Powered Analysis**: OpenAI-based code vulnerability detection
+-   **Security Scanning**: Checks for infinite loops, filesystem access, DDoS risks, and more
+-   **Severity Levels**: Categorized vulnerability reports (low, medium, high, critical)
 
 ## 🚀 Getting Started
 
 ### Prerequisites
 
-- Node.js 18 or later
-- npm or yarn
-- AWS Account (for production deployment)
-- OpenAI API Key (optional, for vulnerability checks)
+-   Node.js 18 or later
+-   npm or yarn
+-   AWS Account (for production deployment)
+-   OpenAI API Key (optional, for vulnerability checks)
 
 ### Installation
 
@@ -70,209 +205,4 @@ npm run dev
 
 Visit [http://localhost:3000](http://localhost:3000) to see the platform.
 
-## 📁 Project Structure
-
-```
-web/
-├── app/
-│   ├── page.tsx                          # Landing page
-│   ├── home/
-│   │   └── page.tsx                      # Visual canvas page (main interface)
-│   ├── function/
-│   │   ├── create/
-│   │   │   └── page.tsx                  # Function creation form
-│   │   └── [id]/
-│   │       ├── page.tsx                  # Function detail & observability
-│   │       └── edit/
-│   │           └── page.tsx              # Function editor with CodeEditor
-│   ├── editor/                           # Legacy code editor
-│   └── api/
-│       ├── functions/
-│       │   ├── list/                     # Get all functions
-│       │   ├── get/                      # Get single function
-│       │   ├── create/                   # Create new function
-│       │   ├── update/                   # Update function metadata
-│       │   ├── deploy/                   # Deploy to Lambda
-│       │   ├── run/                      # Execute function
-│       │   ├── logs/                     # Get run history
-│       │   └── vulnerability-check/      # Security analysis
-│       ├── workspace/
-│       │   ├── save/                     # Save canvas state
-│       │   └── load/                     # Load canvas state
-│       └── vscode/
-│           ├── list/                     # List files in project
-│           ├── read/                     # Read file content
-│           ├── write/                    # Write file content
-│           ├── create/                   # Create file/folder
-│           └── delete/                   # Delete file
-├── components/
-│   ├── FunctionNode.tsx                  # Canvas function block component
-│   ├── TextNode.tsx                      # Editable text annotation node
-│   ├── BorderNode.tsx                    # Resizable border/grouping node
-│   ├── CodeEditor.tsx                    # Monaco editor with file tree
-│   ├── InputDialog.tsx                   # Modal input dialog
-│   └── CreateFunctionDialog.tsx          # Function creation modal
-├── lib/
-│   ├── function-utils.ts                 # Client-side utilities
-│   ├── filesystem-utils.ts               # File tree utilities
-│   ├── s3-utils.ts                       # S3 operations
-│   ├── dynamodb-utils.ts                 # DynamoDB operations
-│   └── lambda-utils.ts                   # Lambda operations
-└── types/
-    └── function.ts                       # TypeScript interfaces
-```
-
-## 🎯 User Flow
-
-1. **Home Canvas**: Start on the visual canvas where you can see all your functions
-2. **Add Elements**: Click to add functions, text annotations, or border boxes for organization
-3. **Create Function**: Place a new function on the canvas and configure its name/runtime
-4. **Edit Code**: Click function node to navigate to editor with file tree and Monaco
-5. **Organize Files**: Create folders and files to structure your function code
-6. **Track Changes**: See modified indicators as you edit, all changes saved in memory
-7. **Security Check**: Run AI-powered vulnerability analysis (coming soon)
-8. **Save All**: Click "Save Changes" to batch save all modified files and metadata to S3/DynamoDB
-9. **Deploy**: Deploy your function to AWS Lambda (coming soon)
-10. **Monitor**: Check real-time metrics, CPU/memory usage, and execution logs (coming soon)
-11. **Workspace Persistence**: Pan, zoom, and arrange - your canvas state auto-saves and restores
-
-## 🛠 Technology Stack
-
-- **Framework**: Next.js 16 with React 19
-- **Language**: TypeScript
-- **Styling**: Tailwind CSS 4
-- **Canvas**: React Flow (@xyflow/react)
-- **Charts**: Recharts
-- **Code Editor**: Monaco Editor
-- **Cloud**: AWS (S3, DynamoDB, Lambda, API Gateway)
-- **AI**: OpenAI GPT-4 for vulnerability detection
-
-## 🔧 Configuration
-
-### Environment Variables
-
-Create a `.env.local` file:
-
-```env
-# AWS Configuration
-AWS_REGION=ap-northeast-2
-AWS_ACCESS_KEY_ID=your_access_key
-AWS_SECRET_ACCESS_KEY=your_secret_key
-
-# S3 Bucket for function code
-S3_BUCKET_NAME=cutty-x-functions
-
-# DynamoDB Tables
-DYNAMODB_TABLE_NAME=cutty-x-functions
-# Workspace state table: sbht-user-progress
-
-# OpenAI API Key (optional, for vulnerability checks)
-OPENAI_API_KEY=your_openai_key
-```
-
-## 🎨 Design Philosophy
-
-- **Playful Theme**: Vibrant purple and pink gradients
-- **Visual First**: Draw.io-inspired interface for intuitive function management
-- **Developer Friendly**: Full-featured code editor with file tree and batch saving
-- **State Persistence**: Everything auto-saves - workspace state, viewport position, and code changes
-- **No Data Loss**: Smart change tracking prevents losing edits when switching files
-- **Security Conscious**: Built-in AI-powered vulnerability detection (coming soon)
-
-## 📊 Observability Features
-
-Each function provides:
-
-- **CPU Usage Graph**: Real-time CPU utilization during execution
-- **Memory Usage Graph**: Memory consumption tracking
-- **Execution Time**: Total runtime in milliseconds
-- **Status Indicators**: Success/error states
-- **Historical Data**: Complete run log with timestamps
-
-## 🔒 Security Features
-
-- AI-powered code analysis using OpenAI GPT-4
-- Detection of:
-  - Infinite loops
-  - Filesystem access vulnerabilities
-  - Potential DDoS attack vectors
-  - Command injection risks
-  - SQL injection patterns
-- Severity categorization
-- Line-level issue reporting
-
-## 📝 API Routes
-
-### Function Management
-
-- `GET /api/functions/list` - List all functions
-- `GET /api/functions/get?id={id}&userId={userId}` - Get function details
-- `POST /api/functions/create` - Create new function
-- `PUT /api/functions/update` - Update function metadata
-- `DELETE /api/functions/delete` - Delete function
-
-### Workspace State
-
-- `POST /api/workspace/save` - Save canvas state (nodes, edges, viewport)
-- `GET /api/workspace/load?userId={userId}` - Load canvas state
-
-### File Operations
-
-- `POST /api/vscode/list` - List files in function directory (recursive)
-- `POST /api/vscode/read` - Read file content from S3
-- `POST /api/vscode/write` - Write file content to S3
-- `POST /api/vscode/create` - Create file or folder
-- `POST /api/vscode/delete` - Delete file
-
-### Operations (Coming Soon)
-
-- `POST /api/functions/deploy` - Deploy function to Lambda
-- `POST /api/functions/run` - Execute function
-- `GET /api/functions/logs?functionId={id}` - Get run history
-- `POST /api/functions/vulnerability-check` - Check for vulnerabilities
-
-## 🚧 Future Enhancements
-
-- GitHub OAuth authentication
-- Multi-user support with user isolation
-- Function deployment to AWS Lambda
-- Function execution and testing
-- Real-time observability dashboard with CPU/memory metrics
-- AI-powered vulnerability checking with OpenAI
-- Function connections and data flow visualization on canvas
-- WebSocket support for real-time updates
-- Custom runtime container support
-- Collaborative editing
-- Cost tracking and budgets
-
-## ✅ Current Implementation Status
-
-**Completed:**
-
-- ✅ Visual canvas with React Flow
-- ✅ Multiple node types (function, text, border)
-- ✅ Workspace persistence (auto-save to DynamoDB)
-- ✅ Viewport state preservation
-- ✅ Function CRUD operations
-- ✅ Monaco editor with file tree
-- ✅ File/folder management (S3)
-- ✅ Batch save for code changes
-- ✅ Modified file tracking
-- ✅ Smart delete key handling
-- ✅ Environment variable configuration
-- ✅ Runtime selection (Node.js, Python)
-
-**In Progress:**
-
-- 🚧 Function deployment
-- 🚧 Function execution
-- 🚧 Observability dashboard
-- 🚧 AI vulnerability checks
-
-## 👥 Team
-
-Team Green - SoftBank Hackathon 2025
-
-## 📄 License
-
-This project is created for the SoftBank Hackathon 2025.
+</details>
