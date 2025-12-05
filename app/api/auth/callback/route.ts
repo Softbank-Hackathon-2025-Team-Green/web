@@ -73,21 +73,16 @@ export async function GET(request: NextRequest) {
     console.log('Redirecting to:', baseUrl, { forwardedHost, forwardedProto, origin: requestUrl.origin });
     const response = NextResponse.redirect(new URL('/home', baseUrl));
     
-    // Set access token (expires in 1 hour typically)
-    response.cookies.set('access_token', tokens.access_token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: tokens.expires_in || 3600, // Use token expiry or default 1 hour
-      path: '/',
-    });
+    // Set cookies with long expiration (matches refresh token ~30 days)
+    // We'll check token expiration via JWT payload, not cookie expiration
+    const cookieMaxAge = 30 * 24 * 60 * 60; // 30 days
 
     // Set ID token
     response.cookies.set('id_token', tokens.id_token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      maxAge: tokens.expires_in || 3600,
+      maxAge: cookieMaxAge,
       path: '/',
     });
 

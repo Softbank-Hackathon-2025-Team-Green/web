@@ -57,20 +57,15 @@ async function refreshTokens(): Promise<boolean> {
     const tokens = await tokenResponse.json();
     console.log('Tokens refreshed successfully');
 
-    // Update cookies with new tokens
-    cookieStore.set('access_token', tokens.access_token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: tokens.expires_in || 3600,
-      path: '/',
-    });
+    // Set cookies with long expiration (matches refresh token ~30 days)
+    // We'll check token expiration via JWT payload, not cookie expiration
+    const cookieMaxAge = 30 * 24 * 60 * 60; // 30 days
 
     cookieStore.set('id_token', tokens.id_token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      maxAge: tokens.expires_in || 3600,
+      maxAge: cookieMaxAge,
       path: '/',
     });
 
