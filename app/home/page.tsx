@@ -1,6 +1,7 @@
 import { ReactFlowProvider } from '@xyflow/react';
-import { getUserInfo } from '@/lib/auth-server';
+import { getUserInfo, TokenExpiredError } from '@/lib/auth-server';
 import { type Node } from '@xyflow/react';
+import { redirect } from 'next/navigation';
 import AuthButton from '@/components/AuthButton';
 import HomeClient from '@/components/HomeClient';
 import { listFunctions } from '@/lib/actions/functions';
@@ -15,7 +16,16 @@ export const metadata = {
 };
 
 export default async function HomePage() {
-  const userInfo = await getUserInfo();
+  let userInfo;
+  
+  try {
+    userInfo = await getUserInfo();
+  } catch (error) {
+    if (error instanceof TokenExpiredError) {
+      redirect('/api/auth/refresh-redirect');
+    }
+    throw error;
+  }
 
   // If not authenticated, show login page
   if (!userInfo) {

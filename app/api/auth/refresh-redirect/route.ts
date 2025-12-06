@@ -68,7 +68,7 @@ export async function GET(request: NextRequest) {
 
     // Get the referer to redirect back to the original page
     const baseUrl = getBaseUrl(request);
-    const referer = request.headers.get('referer') || '/';
+    const referer = request.headers.get('referer') || '/home';
     const refererUrl = new URL(referer);
     const response = NextResponse.redirect(new URL(refererUrl.pathname, baseUrl));
 
