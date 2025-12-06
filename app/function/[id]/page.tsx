@@ -135,7 +135,7 @@ export default function FunctionDetailPage() {
     // Start polling if build is in progress
     const shouldPoll = buildStatus && ['IN_PROGRESS', 'PENDING', 'QUEUED'].includes(buildStatus);
     
-    if (shouldPoll && !isPolling) {
+    if (shouldPoll) {
       setIsPolling(true);
       const interval = setInterval(() => {
         loadDeployLogs(true); // Auto-scroll when polling
@@ -145,12 +145,10 @@ export default function FunctionDetailPage() {
         clearInterval(interval);
         setIsPolling(false);
       };
-    }
-
-    if (!shouldPoll && isPolling) {
+    } else {
       setIsPolling(false);
     }
-  }, [activeTab, buildStatus, isPolling]);
+  }, [activeTab, buildStatus]);
 
   const handleDeploy = async () => {
     setIsDeploying(true);
