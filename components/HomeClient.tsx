@@ -22,6 +22,7 @@ import BorderNode from '@/components/BorderNode';
 import CreateFunctionDialog from '@/components/CreateFunctionDialog';
 import { FunctionMetadata } from '@/types/function';
 import { useRouter } from 'next/navigation';
+import { apiFetch } from '@/lib/api-client';
 
 const nodeTypes = {
   functionNode: FunctionNode,

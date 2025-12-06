@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { FunctionMetadata, FunctionRunLog } from '@/types/function';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { apiFetch } from '@/lib/api-client';
 
 type TabType = 'overview' | 'logs' | 'metrics' | 'deploy';
 
@@ -25,7 +26,7 @@ export default function FunctionDetailPage() {
 
   const loadUserId = async () => {
     try {
-      const authResponse = await fetch('/api/auth/me');
+      const authResponse = await apiFetch('/api/auth/me');
       if (authResponse.ok) {
         const { userId: uid } = await authResponse.json();
         setUserId(uid);
@@ -37,7 +38,7 @@ export default function FunctionDetailPage() {
 
   const loadFunctionData = async () => {
     try {
-      const response = await fetch(`/api/functions/get?functionId=${functionId}`);
+      const response = await apiFetch(`/api/functions/get?functionId=${functionId}`);
       const data = await response.json();
       setFunctionData(data);
     } catch (error) {
@@ -47,7 +48,7 @@ export default function FunctionDetailPage() {
 
   const loadRunLogs = async () => {
     try {
-      const response = await fetch(`/api/functions/logs?functionId=${functionId}`);
+      const response = await apiFetch(`/api/functions/logs?functionId=${functionId}`);
       const logs = await response.json();
       setRunLogs(logs);
     } catch (error) {
@@ -58,7 +59,7 @@ export default function FunctionDetailPage() {
   const loadDeployLogs = async () => {
     setIsLoadingLogs(true);
     try {
-      const response = await fetch(`/api/functions/deploy-logs?functionId=${functionId}`);
+      const response = await apiFetch(`/api/functions/deploy-logs?functionId=${functionId}`);
       if (response.ok) {
         const data = await response.json();
         if (data.success && data.build) {
@@ -96,7 +97,7 @@ export default function FunctionDetailPage() {
   const handleDeploy = async () => {
     setIsDeploying(true);
     try {
-      const response = await fetch('/api/functions/deploy', {
+      const response = await apiFetch('/api/functions/deploy', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
@@ -122,7 +123,7 @@ export default function FunctionDetailPage() {
     setIsRunning(true);
     try {
       // Get the authenticated user ID
-      const authResponse = await fetch('/api/auth/me');
+      const authResponse = await apiFetch('/api/auth/me');
       if (!authResponse.ok) {
         alert('Authentication failed');
         return;

@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { updateFunction } from '@/lib/actions/functions';
-import { requireAuth } from '@/lib/auth-server';
+import { requireAuth, TokenExpiredError } from '@/lib/auth-server';
 
 export async function PUT(request: NextRequest) {
-  const userId = await requireAuth();
-  
   try {
+    const userId = await requireAuth();
+    
     const body = await request.json();
     const { functionId, name, description, runtime, httpRoute, environmentVariables } = body;
     const status = "not-deployed";
@@ -21,6 +21,9 @@ export async function PUT(request: NextRequest) {
 
     return NextResponse.json({ success: true, message: 'Function updated', data: result.data });
   } catch (error) {
+    if (error instanceof TokenExpiredError) {
+      return NextResponse.json({ error: 'token_expired' }, { status: 401 });
+    }
     console.error('Error updating function:', error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Failed to update function' },

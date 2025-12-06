@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { RuntimeImage, EnvironmentVariable, FunctionMetadata } from '@/types/function';
 import CodeEditor from '@/components/CodeEditor';
+import { apiFetch } from '@/lib/api-client';
 
 export default function EditFunctionPage() {
   const params = useParams();
@@ -81,7 +82,7 @@ export default function EditFunctionPage() {
     try {
       // Save all modified files first
       for (const file of modifiedFiles) {
-        const response = await fetch('/api/vscode/write', {
+        const response = await apiFetch('/api/vscode/write', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({

@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getFunction } from '@/lib/actions/functions';
-import { requireAuth } from '@/lib/auth-server';
+import { requireAuth, TokenExpiredError } from '@/lib/auth-server';
 
 export async function GET(request: NextRequest) {
-  const userId = await requireAuth();
-  
   try {
+    const userId = await requireAuth();
+    
     const searchParams = request.nextUrl.searchParams;
     const functionId = searchParams.get('functionId');
     
@@ -21,6 +21,9 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(functionData);
   } catch (error) {
+    if (error instanceof TokenExpiredError) {
+      return NextResponse.json({ error: 'token_expired' }, { status: 401 });
+    }
     console.error('Error getting function:', error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Failed to get function' },

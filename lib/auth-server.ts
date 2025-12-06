@@ -1,5 +1,4 @@
 import { cookies } from 'next/headers';
-import { redirect } from 'next/navigation';
 import { getUserInfoFromToken, isTokenExpired } from './jwt-utils';
 
 /**
@@ -8,8 +7,18 @@ import { getUserInfoFromToken, isTokenExpired } from './jwt-utils';
  */
 
 /**
+ * Custom error for expired tokens
+ */
+export class TokenExpiredError extends Error {
+  constructor() {
+    super('Token expired');
+    this.name = 'TokenExpiredError';
+  }
+}
+
+/**
  * Get the authenticated user's ID from cookies
- * Automatically redirects to refresh endpoint if token is expired
+ * Throws TokenExpiredError if token is expired
  */
 export async function getAuthenticatedUserId(): Promise<string | null> {
   const cookieStore = await cookies();
@@ -19,10 +28,10 @@ export async function getAuthenticatedUserId(): Promise<string | null> {
     return null;
   }
 
-  // Check if token is expired - redirect to refresh endpoint
+  // Check if token is expired - throw error for API endpoints to handle
   if (isTokenExpired(idToken)) {
-    console.log('ID token expired, redirecting to refresh...');
-    redirect('/api/auth/refresh-redirect');
+    console.log('ID token expired');
+    throw new TokenExpiredError();
   }
 
   const userInfo = getUserInfoFromToken(idToken);
@@ -31,7 +40,7 @@ export async function getAuthenticatedUserId(): Promise<string | null> {
 
 /**
  * Get detailed user information from the ID token cookie
- * Automatically redirects to refresh endpoint if token is expired
+ * Throws TokenExpiredError if token is expired
  */
 export async function getUserInfo(): Promise<{
   userId: string;
@@ -45,10 +54,10 @@ export async function getUserInfo(): Promise<{
     return null;
   }
 
-  // Check if token is expired - redirect to refresh endpoint
+  // Check if token is expired - throw error for API endpoints to handle
   if (isTokenExpired(idToken)) {
-    console.log('ID token expired, redirecting to refresh...');
-    redirect('/api/auth/refresh-redirect');
+    console.log('ID token expired');
+    throw new TokenExpiredError();
   }
 
   return getUserInfoFromToken(idToken);

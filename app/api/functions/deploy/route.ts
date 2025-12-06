@@ -1,16 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { startCodeBuild, getBuildStatus, StartBuildParams, BuildInfo } from '@/lib/codebuild-utils';
-import { getAuthenticatedUserId } from '@/lib/auth-server';
+import { getAuthenticatedUserId, TokenExpiredError } from '@/lib/auth-server';
 import { updateFunction, getFunction } from '@/lib/actions/functions';
 
 export async function POST(request: NextRequest) {
-  // Get authenticated user ID (outside try-catch to allow redirect)
-  const userId = await getAuthenticatedUserId();
-  if (!userId) {
-    return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
-  }
-  
   try {
+    // Get authenticated user ID
+    const userId = await getAuthenticatedUserId();
+    if (!userId) {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+    }
+  
     const body = await request.json();
     const { 
       functionId, 
@@ -97,6 +97,9 @@ export async function POST(request: NextRequest) {
       functionId,
     });
   } catch (error) {
+    if (error instanceof TokenExpiredError) {
+      return NextResponse.json({ error: 'token_expired' }, { status: 401 });
+    }
     console.error('Error deploying function:', error);
     return NextResponse.json(
       { 

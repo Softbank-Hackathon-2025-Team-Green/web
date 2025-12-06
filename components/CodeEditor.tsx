@@ -6,6 +6,7 @@ import { getLanguageFromPath } from '@/lib/editor-utils';
 import { FileSystemItem } from '@/lib/actions/vscode';
 import InputDialog from './InputDialog';
 import CodeReviewDialog from './CodeReviewDialog';
+import { apiFetch } from '@/lib/api-client';
 
 interface FileTreeNode extends FileSystemItem {
   children?: FileTreeNode[];

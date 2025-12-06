@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { apiFetch } from '@/lib/api-client';
 
 /**
  * Simple auth status display component - NO AMPLIFY
@@ -12,7 +13,7 @@ export default function AuthStatus() {
 
   useEffect(() => {
     // Check auth status via API
-    fetch('/api/auth/me')
+    apiFetch('/api/auth/me')
       .then(res => res.json())
       .then(data => {
         if (data.userId) {

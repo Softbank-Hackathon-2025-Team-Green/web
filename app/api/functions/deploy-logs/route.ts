@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDeployLogs } from '@/lib/actions/functions';
 import { getBuildLogs } from '@/lib/codebuild-utils';
-import { requireAuth } from '@/lib/auth-server';
+import { requireAuth, TokenExpiredError } from '@/lib/auth-server';
 
 export async function GET(request: NextRequest) {
-  await requireAuth();
-  
   try {
+    await requireAuth();
+    
     const searchParams = request.nextUrl.searchParams;
     const functionId = searchParams.get('functionId');
     
@@ -41,6 +41,9 @@ export async function GET(request: NextRequest) {
       lastBuildId: deployLogsInfo.lastBuildId,
     });
   } catch (error) {
+    if (error instanceof TokenExpiredError) {
+      return NextResponse.json({ error: 'token_expired' }, { status: 401 });
+    }
     console.error('Error getting deploy logs:', error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Failed to get deploy logs' },
