@@ -3,8 +3,9 @@ import { writeFile } from '@/lib/actions/vscode';
 import { requireAuth } from '@/lib/auth-server';
 
 export async function POST(request: NextRequest) {
+  const userId = await requireAuth();
+  
   try {
-    const userId = await requireAuth();
     const { path, content } = await request.json();
 
     if (!path) {

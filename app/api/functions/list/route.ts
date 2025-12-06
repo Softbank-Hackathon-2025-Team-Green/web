@@ -3,8 +3,9 @@ import { listFunctions } from '@/lib/actions/functions';
 import { requireAuth } from '@/lib/auth-server';
 
 export async function GET() {
+  const userId = await requireAuth();
+  
   try {
-    const userId = await requireAuth();
     const functions = await listFunctions(userId);
     return NextResponse.json(functions);
   } catch (error) {

@@ -3,8 +3,9 @@ import { deleteFunction } from '@/lib/actions/functions';
 import { requireAuth } from '@/lib/auth-server';
 
 export async function DELETE(request: NextRequest) {
+  const userId = await requireAuth();
+  
   try {
-    const userId = await requireAuth();
     const body = await request.json();
     const { functionId } = body;
 

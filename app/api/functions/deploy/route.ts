@@ -4,6 +4,12 @@ import { getAuthenticatedUserId } from '@/lib/auth-server';
 import { updateFunction, getFunction } from '@/lib/actions/functions';
 
 export async function POST(request: NextRequest) {
+  // Get authenticated user ID (outside try-catch to allow redirect)
+  const userId = await getAuthenticatedUserId();
+  if (!userId) {
+    return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+  }
+  
   try {
     const body = await request.json();
     const { 
@@ -16,12 +22,6 @@ export async function POST(request: NextRequest) {
 
     if (!functionId) {
       return NextResponse.json({ error: 'Function ID is required' }, { status: 400 });
-    }
-
-    // Get authenticated user ID
-    const userId = await getAuthenticatedUserId();
-    if (!userId) {
-      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
     }
 
     // Get current function to retrieve its data

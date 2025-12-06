@@ -3,8 +3,9 @@ import { loadWorkspace } from '@/lib/actions/workspace';
 import { requireAuth } from '@/lib/auth-server';
 
 export async function GET() {
+  const userId = await requireAuth();
+  
   try {
-    const userId = await requireAuth();
     const workspace = await loadWorkspace(userId);
     return NextResponse.json(workspace);
   } catch (error) {

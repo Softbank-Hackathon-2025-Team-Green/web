@@ -3,8 +3,9 @@ import { getFunction } from '@/lib/actions/functions';
 import { requireAuth } from '@/lib/auth-server';
 
 export async function GET(request: NextRequest) {
+  const userId = await requireAuth();
+  
   try {
-    const userId = await requireAuth();
     const searchParams = request.nextUrl.searchParams;
     const functionId = searchParams.get('functionId');
     

@@ -3,8 +3,9 @@ import { updateFunction } from '@/lib/actions/functions';
 import { requireAuth } from '@/lib/auth-server';
 
 export async function PUT(request: NextRequest) {
+  const userId = await requireAuth();
+  
   try {
-    const userId = await requireAuth();
     const body = await request.json();
     const { functionId, name, description, runtime, httpRoute, environmentVariables } = body;
     const status = "not-deployed";

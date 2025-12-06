@@ -3,8 +3,9 @@ import { saveWorkspace } from '@/lib/actions/workspace';
 import { requireAuth } from '@/lib/auth-server';
 
 export async function POST(request: NextRequest) {
+  const userId = await requireAuth();
+  
   try {
-    const userId = await requireAuth();
     const body = await request.json();
     const { nodes, edges, viewport } = body;
 

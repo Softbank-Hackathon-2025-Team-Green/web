@@ -4,8 +4,9 @@ import { getBuildLogs } from '@/lib/codebuild-utils';
 import { requireAuth } from '@/lib/auth-server';
 
 export async function GET(request: NextRequest) {
+  await requireAuth();
+  
   try {
-    await requireAuth();
     const searchParams = request.nextUrl.searchParams;
     const functionId = searchParams.get('functionId');
     
