@@ -21,6 +21,15 @@ export default function EditFunctionPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [modifiedFiles, setModifiedFiles] = useState<{ path: string; content: string }[]>([]);
 
+  // Set page title
+  useEffect(() => {
+    if (name) {
+      document.title = `Edit ${name} | cutty-x`;
+    } else {
+      document.title = 'Edit Function | cutty-x';
+    }
+  }, [name]);
+
   const runtimeOptions: { value: RuntimeImage; label: string }[] = [
     { value: 'node-18', label: 'Node.js 18' },
     { value: 'node-20', label: 'Node.js 20' },

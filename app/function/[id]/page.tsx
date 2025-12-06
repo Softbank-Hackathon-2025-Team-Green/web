@@ -24,6 +24,15 @@ export default function FunctionDetailPage() {
   const [isLoadingLogs, setIsLoadingLogs] = useState(false);
   const [userId, setUserId] = useState<string>('');
 
+  // Set page title
+  useEffect(() => {
+    if (functionData?.name) {
+      document.title = `${functionData.name} | cutty-x`;
+    } else {
+      document.title = 'Function Details | cutty-x';
+    }
+  }, [functionData?.name]);
+
   const loadUserId = async () => {
     try {
       const authResponse = await apiFetch('/api/auth/me');

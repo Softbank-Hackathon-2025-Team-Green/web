@@ -9,6 +9,11 @@ import { loadWorkspace } from '@/lib/actions/workspace';
 // Force dynamic rendering since we use authentication
 export const dynamic = 'force-dynamic';
 
+export const metadata = {
+  title: 'Home | cutty-x',
+  description: 'Manage your serverless functions',
+};
+
 export default async function HomePage() {
   const userInfo = await getUserInfo();
 
