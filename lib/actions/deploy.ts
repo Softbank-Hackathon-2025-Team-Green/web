@@ -118,7 +118,7 @@ export async function handleDeploySuccess(payload: DeploySuccessPayload): Promis
           type: 'section',
           text: {
             type: 'mrkdwn',
-            text: `*Function URL:*\n\`${url}\``,
+            text: `*Function URL:*\n\`${process.env.NEXT_PUBLIC_FUNCTION_CALL_BASEURL}/${userId}/${customRoutes}\``,
           },
         },
         {
