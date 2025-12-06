@@ -274,9 +274,6 @@ export default function HomeClient({ userId, userEmail, initialFunctions, initia
           >
             Sign Out
           </button>
-          <button className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors">
-            Deploy All
-          </button>
         </div>
       </nav>
 
