@@ -489,7 +489,7 @@ export default function FunctionDetailPage() {
                   </div>
                   <div 
                     ref={deployLogsRef}
-                    className="bg-gray-900 text-gray-100 rounded-lg p-4 font-mono text-xs max-h-[500px] overflow-y-auto border border-gray-700"
+                    className="bg-gray-900 text-gray-100 rounded-lg p-4 font-mono text-xs h-[500px] overflow-y-auto border border-gray-700"
                   >
                     {isLoadingLogs ? (
                       <div className="text-gray-400 flex items-center gap-2">
