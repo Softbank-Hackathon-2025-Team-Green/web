@@ -1,6 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+/**
+ * Get the base URL considering CloudFront/proxy headers
+ */
+function getBaseUrl(request: NextRequest): string {
+  const forwardedHost = request.headers.get('x-forwarded-host');
+  const forwardedProto = request.headers.get('x-forwarded-proto') || 'https';
+  
+  if (forwardedHost) {
+    return `${forwardedProto}://${forwardedHost}`;
+  }
+  
+  return new URL(request.url).origin;
+}
+
 export async function GET(request: NextRequest) {
+  const baseUrl = getBaseUrl(request);
   const requestUrl = new URL(request.url);
   
   try {
@@ -10,7 +25,7 @@ export async function GET(request: NextRequest) {
     const error = requestUrl.searchParams.get('error');
     if (error) {
       console.error('OAuth error:', error);
-      return NextResponse.redirect(new URL('/?error=auth_failed', requestUrl.origin));
+      return NextResponse.redirect(new URL('/?error=auth_failed', baseUrl));
     }
 
     // Get authorization code and state
@@ -19,7 +34,7 @@ export async function GET(request: NextRequest) {
     
     if (!code) {
       console.error('No authorization code received');
-      return NextResponse.redirect(new URL('/?error=no_code', requestUrl.origin));
+      return NextResponse.redirect(new URL('/?error=no_code', baseUrl));
     }
 
     console.log('Authorization code received, exchanging for tokens...');
@@ -56,21 +71,15 @@ export async function GET(request: NextRequest) {
       const errorText = await tokenResponse.text();
       console.error('Token exchange failed:', tokenResponse.status, errorText);
       return NextResponse.redirect(
-        new URL('/?error=token_exchange_failed', requestUrl.origin)
+        new URL('/?error=token_exchange_failed', baseUrl)
       );
     }
 
     const tokens = await tokenResponse.json();
     console.log('Token exchange successful, tokens received:', Object.keys(tokens));
 
-    // Set tokens in HTTP-only cookies
-    // Get the actual host from CloudFront/proxy headers
-    const forwardedHost = request.headers.get('x-forwarded-host');
-    const forwardedProto = request.headers.get('x-forwarded-proto') || 'https';
-    const baseUrl = forwardedHost 
-      ? `${forwardedProto}://${forwardedHost}`
-      : requestUrl.origin;
-    console.log('Redirecting to:', baseUrl, { forwardedHost, forwardedProto, origin: requestUrl.origin });
+    // Redirect to home using base URL from CloudFront headers
+    console.log('Redirecting to:', baseUrl);
     const response = NextResponse.redirect(new URL('/home', baseUrl));
     
     // Set cookies with long expiration (matches refresh token ~30 days)
@@ -101,7 +110,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('OAuth callback error:', error);
     return NextResponse.redirect(
-      new URL(`/?error=callback_failed&details=${encodeURIComponent(String(error))}`, requestUrl.origin)
+      new URL(`/?error=callback_failed&details=${encodeURIComponent(String(error))}`, baseUrl)
     );
   }
 }

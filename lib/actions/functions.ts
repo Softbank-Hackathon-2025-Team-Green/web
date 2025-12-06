@@ -79,6 +79,8 @@ export async function updateFunction(
     environmentVariables?: Array<{ key: string; value: string }>;
     status?: string;
     currentRevision?: string;
+    buildId?: string;
+    lastBuildId?: string;
   },
   userId?: string
 ): Promise<{ success: boolean; data: FunctionMetadata }> {
@@ -127,6 +129,16 @@ export async function updateFunction(
       expressionAttributeValues[':currentRevision'] = updates.currentRevision;
     }
 
+    if (updates.buildId !== undefined) {
+      updateExpressions.push('buildId = :buildId');
+      expressionAttributeValues[':buildId'] = updates.buildId;
+    }
+
+    if (updates.lastBuildId !== undefined) {
+      updateExpressions.push('lastBuildId = :lastBuildId');
+      expressionAttributeValues[':lastBuildId'] = updates.lastBuildId;
+    }
+
     // Always update the updatedAt timestamp
     updateExpressions.push('updatedAt = :updatedAt');
     expressionAttributeValues[':updatedAt'] = new Date().toISOString();
@@ -167,5 +179,31 @@ export async function deleteFunction(functionId: string, userId?: string): Promi
   } catch (error) {
     console.error('Error deleting function:', error);
     throw new Error(error instanceof Error ? error.message : 'Failed to delete function');
+  }
+}
+
+export async function getDeployLogs(functionId: string, userId?: string) {
+  try {
+    const effectiveUserId = userId || await requireAuth();
+    
+    // Get function metadata to retrieve buildId
+    const functionData = await getFunction(functionId, effectiveUserId);
+    
+    if (!functionData) {
+      throw new Error('Function not found');
+    }
+
+    if (!functionData.buildId) {
+      throw new Error('No build information found for this function');
+    }
+
+    return {
+      success: true,
+      buildId: functionData.buildId,
+      lastBuildId: functionData.lastBuildId,
+    };
+  } catch (error) {
+    console.error('Error getting deploy logs:', error);
+    throw new Error(error instanceof Error ? error.message : 'Failed to get deploy logs');
   }
 }

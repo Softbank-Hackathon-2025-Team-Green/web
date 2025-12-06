@@ -9,6 +9,7 @@ import { S3Client } from '@aws-sdk/client-s3';
 import { LambdaClient } from '@aws-sdk/client-lambda';
 import { CodeBuildClient } from '@aws-sdk/client-codebuild';
 import { CognitoIdentityProviderClient } from '@aws-sdk/client-cognito-identity-provider';
+import { CloudWatchLogsClient } from '@aws-sdk/client-cloudwatch-logs';
 
 
 /**
@@ -34,6 +35,7 @@ let s3Client: S3Client | null = null;
 let lambdaClient: LambdaClient | null = null;
 let codeBuildClient: CodeBuildClient | null = null;
 let cognitoClient: CognitoIdentityProviderClient | null = null;
+let cloudWatchLogsClient: CloudWatchLogsClient | null = null;
 
 /**
  * Get or create DynamoDB client instance
@@ -94,6 +96,16 @@ export function getCognitoClient(): CognitoIdentityProviderClient {
     cognitoClient = new CognitoIdentityProviderClient(getBaseConfig());
   }
   return cognitoClient;
+}
+
+/**
+ * Get or create CloudWatch Logs client instance
+ */
+export function getCloudWatchLogsClient(): CloudWatchLogsClient {
+  if (!cloudWatchLogsClient) {
+    cloudWatchLogsClient = new CloudWatchLogsClient(getBaseConfig());
+  }
+  return cloudWatchLogsClient;
 }
 
 /**

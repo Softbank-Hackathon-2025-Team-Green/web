@@ -16,6 +16,7 @@ export default function FunctionDetailPage() {
   const [runLogs, setRunLogs] = useState<FunctionRunLog[]>([]);
   const [deployLogs, setDeployLogs] = useState<string>('');
   const [buildStatus, setBuildStatus] = useState<string>('');
+  const [buildInfo, setBuildInfo] = useState<any>(null);
   const [isDeploying, setIsDeploying] = useState(false);
   const [isRunning, setIsRunning] = useState(false);
   const [activeTab, setActiveTab] = useState<TabType>('overview');
@@ -57,17 +58,26 @@ export default function FunctionDetailPage() {
   const loadDeployLogs = async () => {
     setIsLoadingLogs(true);
     try {
-      // TODO: Implement actual deploy logs API
-      // For now, simulate with CloudWatch or CodeBuild logs
       const response = await fetch(`/api/functions/deploy-logs?functionId=${functionId}`);
       if (response.ok) {
         const data = await response.json();
-        setDeployLogs(data.logs || 'No deploy logs available');
-        setBuildStatus(data.status || 'unknown');
+        if (data.success && data.build) {
+          setBuildInfo(data.build);
+          setBuildStatus(data.build.status || 'unknown');
+          setDeployLogs(data.build.logContent || 'No logs available');
+        } else {
+          setDeployLogs('No deployment logs available yet');
+          setBuildStatus('N/A');
+        }
+      } else {
+        const errorData = await response.json();
+        setDeployLogs(errorData.error || 'Failed to load deploy logs');
+        setBuildStatus('Error');
       }
     } catch (error) {
       console.error('Failed to load deploy logs:', error);
-      setDeployLogs('Failed to load deploy logs');
+      setDeployLogs('Failed to load deploy logs: ' + (error instanceof Error ? error.message : String(error)));
+      setBuildStatus('Error');
     } finally {
       setIsLoadingLogs(false);
     }
@@ -325,8 +335,64 @@ export default function FunctionDetailPage() {
                   </div>
                 </div>
 
+                {buildInfo && (
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Build Information</h3>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                        <div className="text-xs text-gray-500 uppercase tracking-wide mb-1">Build ID</div>
+                        <div className="text-sm font-mono text-gray-900 truncate">{buildInfo.id}</div>
+                      </div>
+                      <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                        <div className="text-xs text-gray-500 uppercase tracking-wide mb-1">Project Name</div>
+                        <div className="text-sm text-gray-900">{buildInfo.projectName}</div>
+                      </div>
+                      {buildInfo.startTime && (
+                        <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                          <div className="text-xs text-gray-500 uppercase tracking-wide mb-1">Start Time</div>
+                          <div className="text-sm text-gray-900">{new Date(buildInfo.startTime).toLocaleString()}</div>
+                        </div>
+                      )}
+                      {buildInfo.endTime && (
+                        <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                          <div className="text-xs text-gray-500 uppercase tracking-wide mb-1">End Time</div>
+                          <div className="text-sm text-gray-900">{new Date(buildInfo.endTime).toLocaleString()}</div>
+                        </div>
+                      )}
+                      {buildInfo.currentPhase && (
+                        <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                          <div className="text-xs text-gray-500 uppercase tracking-wide mb-1">Current Phase</div>
+                          <div className="text-sm text-gray-900">{buildInfo.currentPhase}</div>
+                        </div>
+                      )}
+                      {buildInfo.logs?.deepLink && (
+                        <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                          <div className="text-xs text-gray-500 uppercase tracking-wide mb-1">CloudWatch Logs</div>
+                          <a 
+                            href={buildInfo.logs.deepLink} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="text-sm text-blue-600 hover:text-blue-800 underline"
+                          >
+                            View in AWS Console →
+                          </a>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Deployment Logs</h3>
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold text-gray-900">Deployment Logs</h3>
+                    <button
+                      onClick={loadDeployLogs}
+                      disabled={isLoadingLogs}
+                      className="px-3 py-1 text-sm bg-purple-600 text-white rounded-md hover:bg-purple-700 disabled:opacity-50 transition-colors"
+                    >
+                      {isLoadingLogs ? '⚙ Refreshing...' : '🔄 Refresh'}
+                    </button>
+                  </div>
                   <div className="bg-gray-900 text-gray-100 rounded-lg p-4 font-mono text-xs max-h-[500px] overflow-y-auto border border-gray-700">
                     {isLoadingLogs ? (
                       <div className="text-gray-400 flex items-center gap-2">

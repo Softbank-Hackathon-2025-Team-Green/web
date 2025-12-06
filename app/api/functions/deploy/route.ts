@@ -68,10 +68,12 @@ export async function POST(request: NextRequest) {
     const currentRevision = currentFunction.currentRevision ? parseInt(currentFunction.currentRevision) : 0;
     const newRevision = currentRevision + 1;
     
-    // Update Function's dynamoDB entry to 'deploying' status and increment revision
+    // Update Function's dynamoDB entry to 'deploying' status, increment revision, and store buildId
     await updateFunction(functionId, { 
       status: 'deploying',
-      currentRevision: newRevision.toString()
+      currentRevision: newRevision.toString(),
+      buildId: buildData.id,
+      lastBuildId: currentFunction.buildId || undefined
     }, userId);
     
     // If waitForCompletion is true, poll for build status

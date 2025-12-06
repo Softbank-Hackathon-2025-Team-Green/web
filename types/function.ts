@@ -33,6 +33,8 @@ export interface FunctionMetadata {
   deploymentMessage?: string;
   deploymentError?: string;
   lastDeployAttemptAt?: string;
+  buildId?: string; // Current/latest CodeBuild build ID
+  lastBuildId?: string; // Previous build ID for history
 }
 
 export interface FunctionRunLog {

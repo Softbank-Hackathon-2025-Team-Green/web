@@ -9,7 +9,8 @@ import {
   StartBuildCommandOutput,
   Build,
 } from '@aws-sdk/client-codebuild';
-import { getCodeBuildClient } from './aws-clients';
+import { GetLogEventsCommand } from '@aws-sdk/client-cloudwatch-logs';
+import { getCodeBuildClient, getCloudWatchLogsClient } from './aws-clients';
 
 export interface CodeBuildResult {
   success: boolean;
@@ -38,6 +39,7 @@ export interface BuildInfo {
     streamName?: string;
     deepLink?: string;
   };
+  logContent?: string; // Actual log content from CloudWatch
 }
 
 /**
@@ -249,6 +251,84 @@ export async function getProjectDetails(
     return {
       success: false,
       message: 'Failed to get project details',
+      error: error instanceof Error ? error.message : String(error),
+    };
+  }
+}
+
+/**
+ * Get build logs and information for a specific build
+ */
+export async function getBuildLogs(
+  buildId: string
+): Promise<CodeBuildResult> {
+  try {
+    const client = getCodeBuildClient();
+    const command = new BatchGetBuildsCommand({ ids: [buildId] });
+    const response = await client.send(command);
+
+    if (!response.builds || response.builds.length === 0) {
+      return {
+        success: false,
+        message: 'Build not found',
+        error: `Build ID ${buildId} not found`,
+      };
+    }
+
+    const build = response.builds[0];
+    const buildInfo: BuildInfo = {
+      id: build.id || '',
+      projectName: build.projectName || '',
+      status: build.buildStatus || 'UNKNOWN',
+      startTime: build.startTime,
+      endTime: build.endTime,
+      currentPhase: build.currentPhase,
+      sourceVersion: build.sourceVersion,
+      logs: build.logs ? {
+        groupName: build.logs.groupName,
+        streamName: build.logs.streamName,
+        deepLink: build.logs.deepLink,
+      } : undefined,
+    };
+
+    // Fetch actual log content from CloudWatch if available
+    if (build.logs?.groupName && build.logs?.streamName) {
+      try {
+        const logsClient = getCloudWatchLogsClient();
+        const logCommand = new GetLogEventsCommand({
+          logGroupName: build.logs.groupName,
+          logStreamName: build.logs.streamName,
+          startFromHead: true,
+          limit: 1000, // Get up to 1000 log events
+        });
+        
+        const logResponse = await logsClient.send(logCommand);
+        
+        if (logResponse.events && logResponse.events.length > 0) {
+          buildInfo.logContent = logResponse.events
+            .map(event => event.message || '')
+            .join('');
+        } else {
+          buildInfo.logContent = 'No log content available yet. Build may still be initializing.';
+        }
+      } catch (logError) {
+        console.error('Error fetching CloudWatch logs:', logError);
+        buildInfo.logContent = `Error fetching logs: ${logError instanceof Error ? logError.message : String(logError)}`;
+      }
+    } else {
+      buildInfo.logContent = 'Log information not yet available. Build may be in queue or starting.';
+    }
+
+    return {
+      success: true,
+      message: 'Build logs retrieved successfully',
+      data: buildInfo,
+    };
+  } catch (error) {
+    console.error('Error getting build logs:', error);
+    return {
+      success: false,
+      message: 'Failed to get build logs',
       error: error instanceof Error ? error.message : String(error),
     };
   }

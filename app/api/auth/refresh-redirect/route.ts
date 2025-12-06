@@ -1,6 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 
+/**
+ * Get the base URL considering CloudFront/proxy headers
+ */
+function getBaseUrl(request: NextRequest): string {
+  const forwardedHost = request.headers.get('x-forwarded-host');
+  const forwardedProto = request.headers.get('x-forwarded-proto') || 'https';
+  
+  if (forwardedHost) {
+    return `${forwardedProto}://${forwardedHost}`;
+  }
+  
+  return new URL(request.url).origin;
+}
+
 export async function GET(request: NextRequest) {
   try {
     const cookieStore = await cookies();
@@ -8,7 +22,8 @@ export async function GET(request: NextRequest) {
     
     if (!refreshToken) {
       console.log('No refresh token available');
-      return NextResponse.redirect(new URL('/', request.url));
+      const baseUrl = getBaseUrl(request);
+      return NextResponse.redirect(new URL('/', baseUrl));
     }
 
     const cognitoDomain = process.env.NEXT_PUBLIC_COGNITO_DOMAIN;
@@ -17,7 +32,8 @@ export async function GET(request: NextRequest) {
 
     if (!cognitoDomain || !clientId) {
       console.error('Missing Cognito configuration');
-      return NextResponse.redirect(new URL('/', request.url));
+      const baseUrl = getBaseUrl(request);
+      return NextResponse.redirect(new URL('/', baseUrl));
     }
 
     const tokenEndpoint = `https://${cognitoDomain}/oauth2/token`;
@@ -43,16 +59,18 @@ export async function GET(request: NextRequest) {
     if (!tokenResponse.ok) {
       const errorText = await tokenResponse.text();
       console.error('Token refresh failed:', tokenResponse.status, errorText);
-      return NextResponse.redirect(new URL('/home', request.url));
+      const baseUrl = getBaseUrl(request);
+      return NextResponse.redirect(new URL('/home', baseUrl));
     }
 
     const tokens = await tokenResponse.json();
     console.log('Tokens refreshed successfully');
 
     // Get the referer to redirect back to the original page
+    const baseUrl = getBaseUrl(request);
     const referer = request.headers.get('referer') || '/';
     const refererUrl = new URL(referer);
-    const response = NextResponse.redirect(new URL(refererUrl.pathname, request.url));
+    const response = NextResponse.redirect(new URL(refererUrl.pathname, baseUrl));
 
     // Set cookies with long expiration (matches refresh token ~30 days)
     const cookieMaxAge = 30 * 24 * 60 * 60; // 30 days
@@ -68,6 +86,7 @@ export async function GET(request: NextRequest) {
     return response;
   } catch (error) {
     console.error('Error refreshing tokens:', error);
-    return NextResponse.redirect(new URL('/', request.url));
+    const baseUrl = getBaseUrl(request);
+    return NextResponse.redirect(new URL('/', baseUrl));
   }
 }
