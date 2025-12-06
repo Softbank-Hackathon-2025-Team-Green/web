@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { FunctionMetadata, FunctionRunLog } from '@/types/function';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
@@ -23,6 +23,9 @@ export default function FunctionDetailPage() {
   const [activeTab, setActiveTab] = useState<TabType>('overview');
   const [isLoadingLogs, setIsLoadingLogs] = useState(false);
   const [userId, setUserId] = useState<string>('');
+  const [userEmail, setUserEmail] = useState<string>('');
+  const [isPolling, setIsPolling] = useState(false);
+  const deployLogsRef = useRef<HTMLDivElement>(null);
 
   // Set page title
   useEffect(() => {
@@ -37,11 +40,21 @@ export default function FunctionDetailPage() {
     try {
       const authResponse = await apiFetch('/api/auth/me');
       if (authResponse.ok) {
-        const { userId: uid } = await authResponse.json();
+        const { userId: uid, email } = await authResponse.json();
         setUserId(uid);
+        setUserEmail(email || '');
       }
     } catch (error) {
       console.error('Failed to load user ID:', error);
+    }
+  };
+
+  const handleSignOut = async () => {
+    try {
+      await fetch('/api/auth/signout', { method: 'POST' });
+      window.location.href = '/';
+    } catch (error) {
+      console.error('Sign out error:', error);
     }
   };
 
@@ -65,7 +78,7 @@ export default function FunctionDetailPage() {
     }
   };
 
-  const loadDeployLogs = async () => {
+  const loadDeployLogs = async (scrollToBottom = true) => {
     setIsLoadingLogs(true);
     try {
       const response = await apiFetch(`/api/functions/deploy-logs?functionId=${functionId}`);
@@ -75,6 +88,15 @@ export default function FunctionDetailPage() {
           setBuildInfo(data.build);
           setBuildStatus(data.build.status || 'unknown');
           setDeployLogs(data.build.logContent || 'No logs available');
+          
+          // Auto-scroll to bottom if requested
+          if (scrollToBottom) {
+            setTimeout(() => {
+              if (deployLogsRef.current) {
+                deployLogsRef.current.scrollTop = deployLogsRef.current.scrollHeight;
+              }
+            }, 100);
+          }
         } else {
           setDeployLogs('No deployment logs available yet');
           setBuildStatus('N/A');
@@ -103,6 +125,33 @@ export default function FunctionDetailPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [functionId, activeTab]);
 
+  // Auto-refresh deploy logs when build is in progress
+  useEffect(() => {
+    if (activeTab !== 'deploy') {
+      setIsPolling(false);
+      return;
+    }
+
+    // Start polling if build is in progress
+    const shouldPoll = buildStatus && ['IN_PROGRESS', 'PENDING', 'QUEUED'].includes(buildStatus);
+    
+    if (shouldPoll && !isPolling) {
+      setIsPolling(true);
+      const interval = setInterval(() => {
+        loadDeployLogs(true); // Auto-scroll when polling
+      }, 5000); // Poll every 5 seconds
+
+      return () => {
+        clearInterval(interval);
+        setIsPolling(false);
+      };
+    }
+
+    if (!shouldPoll && isPolling) {
+      setIsPolling(false);
+    }
+  }, [activeTab, buildStatus, isPolling]);
+
   const handleDeploy = async () => {
     setIsDeploying(true);
     try {
@@ -117,6 +166,9 @@ export default function FunctionDetailPage() {
       if (response.ok) {
         alert('Function deployed successfully!');
         loadFunctionData();
+        // Switch to deploy tab and trigger log polling
+        setActiveTab('deploy');
+        loadDeployLogs();
       } else {
         alert('Deployment failed');
       }
@@ -186,22 +238,48 @@ export default function FunctionDetailPage() {
   })) || [];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 p-8">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="bg-white rounded-lg shadow-xl p-6 mb-6">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex-1">
-              <h1 className="text-3xl font-bold text-purple-600">{functionData.name}</h1>
-              <p className="text-gray-600 mt-1">{functionData.description || 'No description'}</p>
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50">
+      {/* Top Navigation Bar */}
+      <nav className="bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <button 
+            onClick={() => router.push('/home')}
+            className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 hover:opacity-80 transition-opacity cursor-pointer"
+          >
+            cutty-x
+          </button>
+          <span className="text-sm text-gray-500">FaaS Platform</span>
+        </div>
+        
+        <div className="flex items-center gap-4">
+          {userEmail && (
+            <span className="text-sm text-gray-600">{userEmail}</span>
+          )}
+          <button 
+            onClick={handleSignOut}
+            className="px-4 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded-md transition-colors"
+          >
+            Sign Out
+          </button>
+        </div>
+      </nav>
+
+      <div className="p-8">
+        <div className="max-w-7xl mx-auto">
+          {/* Header */}
+          <div className="bg-white rounded-lg shadow-xl p-6 mb-6">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex-1">
+                <h1 className="text-3xl font-bold text-purple-600">{functionData.name}</h1>
+                <p className="text-gray-600 mt-1">{functionData.description || 'No description'}</p>
+              </div>
+              <button
+                onClick={() => router.push('/home')}
+                className="px-4 py-2 text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300"
+              >
+                ← Back
+              </button>
             </div>
-            <button
-              onClick={() => router.push('/home')}
-              className="px-4 py-2 text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300"
-            >
-              ← Back
-            </button>
-          </div>
 
           <div className="flex gap-3 mb-4 flex-wrap">
             <span className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm font-medium">
@@ -394,16 +472,27 @@ export default function FunctionDetailPage() {
 
                 <div>
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-semibold text-gray-900">Deployment Logs</h3>
+                    <div className="flex items-center gap-3">
+                      <h3 className="text-lg font-semibold text-gray-900">Deployment Logs</h3>
+                      {isPolling && (
+                        <span className="flex items-center gap-2 text-xs text-green-600 bg-green-50 px-2 py-1 rounded-full">
+                          <span className="animate-pulse">●</span>
+                          Auto-refreshing
+                        </span>
+                      )}
+                    </div>
                     <button
-                      onClick={loadDeployLogs}
+                      onClick={() => loadDeployLogs(true)}
                       disabled={isLoadingLogs}
                       className="px-3 py-1 text-sm bg-purple-600 text-white rounded-md hover:bg-purple-700 disabled:opacity-50 transition-colors"
                     >
                       {isLoadingLogs ? '⚙ Refreshing...' : '🔄 Refresh'}
                     </button>
                   </div>
-                  <div className="bg-gray-900 text-gray-100 rounded-lg p-4 font-mono text-xs max-h-[500px] overflow-y-auto border border-gray-700">
+                  <div 
+                    ref={deployLogsRef}
+                    className="bg-gray-900 text-gray-100 rounded-lg p-4 font-mono text-xs max-h-[500px] overflow-y-auto border border-gray-700"
+                  >
                     {isLoadingLogs ? (
                       <div className="text-gray-400 flex items-center gap-2">
                         <span className="animate-spin">⚙</span>
@@ -554,6 +643,7 @@ export default function FunctionDetailPage() {
               </div>
             )}
           </div>
+        </div>
         </div>
       </div>
     </div>
