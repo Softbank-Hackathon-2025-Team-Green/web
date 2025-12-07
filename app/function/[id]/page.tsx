@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { FunctionMetadata, FunctionRunLog } from '@/types/function';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { apiFetch } from '@/lib/api-client';
+import AthenaLogsViewer, { type RequestLog } from '@/components/AthenaLogsViewer';
 
 type TabType = 'overview' | 'logs' | 'metrics' | 'deploy';
 
@@ -26,6 +27,8 @@ export default function FunctionDetailPage() {
   const [userEmail, setUserEmail] = useState<string>('');
   const [isPolling, setIsPolling] = useState(false);
   const deployLogsRef = useRef<HTMLDivElement>(null);
+  const [athenaLogs, setAthenaLogs] = useState<RequestLog[]>([]);
+  const [isLoadingAthenaLogs, setIsLoadingAthenaLogs] = useState(false);
 
   // Set page title
   useEffect(() => {
@@ -78,6 +81,21 @@ export default function FunctionDetailPage() {
     }
   };
 
+  const loadAthenaLogs = async () => {
+    setIsLoadingAthenaLogs(true);
+    try {
+      const response = await apiFetch(`/api/functions/athena-logs?functionId=${functionId}`);
+      const data = await response.json();
+      if (data.success) {
+        setAthenaLogs(data.requests || []);
+      }
+    } catch (error) {
+      console.error('Failed to load Athena logs:', error);
+    } finally {
+      setIsLoadingAthenaLogs(false);
+    }
+  };
+
   const loadDeployLogs = async (scrollToBottom = true) => {
     setIsLoadingLogs(true);
     try {
@@ -121,6 +139,9 @@ export default function FunctionDetailPage() {
     loadRunLogs();
     if (activeTab === 'deploy') {
       loadDeployLogs();
+    }
+    if (activeTab === 'logs') {
+      loadAthenaLogs();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [functionId, activeTab]);
@@ -512,46 +533,11 @@ export default function FunctionDetailPage() {
             {/* Run Logs Tab */}
             {activeTab === 'logs' && (
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Execution History</h3>
-                {runLogs.length === 0 ? (
-                  <div className="text-center py-12 bg-gray-50 rounded-lg border border-gray-200">
-                    <p className="text-gray-500 text-lg mb-2">No execution logs yet</p>
-                    <p className="text-sm text-gray-400">Run the function to see execution logs</p>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {runLogs.map((log) => (
-                      <div key={log.id} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
-                        <div className="flex items-center justify-between mb-3">
-                          <div className="flex items-center gap-3">
-                            <span className={`px-3 py-1 rounded-full text-sm font-semibold ${
-                              log.status === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                            }`}>
-                              {log.status}
-                            </span>
-                            <span className="text-gray-600 text-sm">
-                              {new Date(log.startTime).toLocaleString()}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-4 text-sm text-gray-600">
-                            <span>⏱️ {log.executionTime}ms</span>
-                            {log.cpuUsage && log.cpuUsage.length > 0 && (
-                              <span>💻 CPU: {Math.max(...log.cpuUsage).toFixed(1)}%</span>
-                            )}
-                            {log.memoryUsage && log.memoryUsage.length > 0 && (
-                              <span>🧠 Mem: {Math.max(...log.memoryUsage).toFixed(0)}MB</span>
-                            )}
-                          </div>
-                        </div>
-                        {log.errorMessage && (
-                          <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-md text-red-700 text-sm font-mono">
-                            {log.errorMessage}
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                )}
+                <AthenaLogsViewer
+                  requests={athenaLogs}
+                  onRefresh={loadAthenaLogs}
+                  isLoading={isLoadingAthenaLogs}
+                />
               </div>
             )}
 
