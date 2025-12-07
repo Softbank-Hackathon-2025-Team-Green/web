@@ -547,35 +547,36 @@ export default function FunctionDetailPage() {
                 {latestRun ? (
                   <div className="space-y-6">
                     <div>
-                      <h3 className="text-lg font-semibold text-gray-900 mb-4">Latest Execution Metrics</h3>
+                      <h3 className="text-lg font-semibold text-gray-900 mb-4">Execution Metrics (mock data)</h3>
                       <div className="grid grid-cols-3 gap-4 mb-6">
                         <div className="bg-blue-50 p-6 rounded-lg border border-blue-200">
-                          <div className="text-sm text-blue-600 font-medium mb-2">Execution Time</div>
+                          <div className="text-sm text-blue-600 font-medium mb-2">Average Execution Time</div>
                           <div className="text-3xl font-bold text-blue-700">{latestRun.executionTime}<span className="text-lg">ms</span></div>
                         </div>
                         <div className="bg-green-50 p-6 rounded-lg border border-green-200">
-                          <div className="text-sm text-green-600 font-medium mb-2">Status</div>
-                          <div className="text-3xl font-bold text-green-700 capitalize">{latestRun.status}</div>
+                          <div className="text-sm text-green-600 font-medium mb-2">Average CPU Usage</div>
+                          <div className="text-3xl font-bold text-green-700 capitalize">5%</div>
                         </div>
                         <div className="bg-purple-50 p-6 rounded-lg border border-purple-200">
-                          <div className="text-sm text-purple-600 font-medium mb-2">Executed At</div>
+                          <div className="text-sm text-purple-600 font-medium mb-2">Average Mem Usage</div>
                           <div className="text-lg font-bold text-purple-700">
-                            {new Date(latestRun.startTime).toLocaleString()}
+                            123MB
                           </div>
                         </div>
+                        
                       </div>
                     </div>
 
                     {chartData.length > 0 && (
                       <div>
-                        <h3 className="text-lg font-semibold text-gray-900 mb-4">Resource Usage Timeline</h3>
+                        <h3 className="text-lg font-semibold text-gray-900 mb-4">Resource Usage History</h3>
                         <div className="bg-white p-4 rounded-lg border border-gray-200">
                           <ResponsiveContainer width="100%" height={350}>
                             <LineChart data={chartData}>
                               <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                               <XAxis 
                                 dataKey="time" 
-                                label={{ value: 'Time (s)', position: 'insideBottom', offset: -5 }}
+                                label={{ value: 'Runs', position: 'insideBottom', offset: -5 }}
                                 stroke="#6b7280"
                               />
                               <YAxis 
